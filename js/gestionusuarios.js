@@ -181,26 +181,29 @@ function configurarBusqueda() {
     }
     
     // Configurar eventos
-    function configurarEventos() {
-        $('#btnBuscarCedula').on('click', buscarPorCedula);
-        $('#formCrearUsuario').on('submit', crearUsuario);
-        $('#formEditarUsuario').on('submit', editarUsuario);
-        $('#formEliminarUsuario').on('submit', eliminarUsuario);
-        $('#editarUsuarioModal').on('show.bs.modal', cargarDatosEdicion);
-        $('#eliminarUsuarioModal').on('show.bs.modal', cargarDatosEliminacion);
-        
-        $('#crearUsuarioModal').on('hidden.bs.modal', function() {
-            limpiarFormulario('formCrearUsuario');
-        });
-        
-        $('#editarUsuarioModal').on('hidden.bs.modal', function() {
-            limpiarFormulario('formEditarUsuario');
-        });
-        
-        if (config.debug) {
-            $('#debugInfo').removeClass('d-none');
-        }
+    // EN LA FUNCIÓN configurarEventos(), ASEGÚRATE QUE TENGA ESTAS LÍNEAS:
+function configurarEventos() {
+    $('#btnBuscarCedula').on('click', buscarPorCedula);
+    $('#formCrearUsuario').on('submit', crearUsuario);
+    $('#formEditarUsuario').on('submit', editarUsuario);
+    $('#formEliminarUsuario').on('submit', eliminarUsuario);
+    
+    // ✅ ESTOS EVENTOS SON CRÍTICOS
+    $('#editarUsuarioModal').on('show.bs.modal', cargarDatosEdicion);
+    $('#eliminarUsuarioModal').on('show.bs.modal', cargarDatosEliminacion);
+    
+    $('#crearUsuarioModal').on('hidden.bs.modal', function() {
+        limpiarFormulario('formCrearUsuario');
+    });
+    
+    $('#editarUsuarioModal').on('hidden.bs.modal', function() {
+        limpiarFormulario('formEditarUsuario');
+    });
+    
+    if (config.debug) {
+        $('#debugInfo').removeClass('d-none');
     }
+}
     
     // Función para cargar usuarios paginados con búsqueda
     // VERSIÓN SIMPLIFICADA Y SUAVE para cargarUsuariosPaginados
@@ -353,18 +356,21 @@ function mostrarUsuariosPaginados(usuarios) {
                 <td>
                     <div class="btn-group">
                         ${config.permisos.puede_editar ? `
-                        <button class="btn btn-sm btn-warning me-1 btn-editar"
-                                data-bs-toggle="modal" data-bs-target="#editarUsuarioModal"
-                                data-id="${u.id_usuario}"
-                                data-cedula="${escapeHtml(u.cedula)}"
-                                data-username="${escapeHtml(u.username)}"
-                                data-nombres="${escapeHtml(u.nombres)}"
-                                data-apellidos="${escapeHtml(u.apellidos)}"
-                                data-sexo="${escapeHtml(u.sexo)}"
-                                data-nacionalidad="${escapeHtml(u.nacionalidad)}"
-                                data-correo="${escapeHtml(u.correo)}"
-                                data-rol="${u.id_rol}"
-                                data-estado="${u.id_estado}">
+                       <button class="btn btn-sm btn-warning me-1 btn-editar"
+                            data-bs-toggle="modal" data-bs-target="#editarUsuarioModal"
+                            data-id="${u.id_usuario}"
+                            data-cedula="${escapeHtml(u.cedula)}"
+                            data-username="${escapeHtml(u.username)}"
+                            data-nombres="${escapeHtml(u.nombres)}"
+                            data-apellidos="${escapeHtml(u.apellidos)}"
+                            data-sexo="${escapeHtml(u.sexo)}"
+                            data-nacionalidad="${escapeHtml(u.nacionalidad)}"
+                            data-telefono_contacto="${escapeHtml(u.telefono_contacto || '')}"
+                            data-direccion_domicilio="${escapeHtml(u.direccion_domicilio || '')}"
+                            data-fecha_verificacion="${u.fecha_verificacion || ''}"
+                            data-correo="${escapeHtml(u.correo)}"
+                            data-rol="${u.id_rol}"
+                            data-estado="${u.id_estado}">
                             <i class="bi bi-pencil-square"></i>
                         </button>
                         ` : ''}
@@ -873,39 +879,46 @@ function resetearCamposBusqueda() {
         });
     }
     
-    // Cargar datos en modal de edición
-    function cargarDatosEdicion(e) {
-        const btn = e.relatedTarget;
-        if (!btn) return;
-        
-        try {
-            const modal = $(this);
-            modal.find('#edit_id').val(btn.dataset.id);
-            modal.find('#edit_cedula').val(btn.dataset.cedula);
-            modal.find('#edit_username').val(btn.dataset.username);
-            modal.find('#edit_nombres').val(btn.dataset.nombres);
-            modal.find('#edit_apellidos').val(btn.dataset.apellidos);
-            modal.find('#edit_sexo').val(btn.dataset.sexo);
-            
-            const nacionalidadSelect = modal.find('#edit_nacionalidadSelect');
-            if (nacionalidadSelect.hasClass('select2-hidden-accessible')) {
-                nacionalidadSelect.val(btn.dataset.nacionalidad).trigger('change');
-            } else {
-                nacionalidadSelect.val(btn.dataset.nacionalidad);
-            }
-            
-            modal.find('#edit_correo').val(btn.dataset.correo);
-            modal.find('#edit_rol').val(btn.dataset.rol);
-            modal.find('#edit_estado').val(btn.dataset.estado);
-            modal.find('#edit_password').val('');
-            
-            if (config.debug) {
-               console.log('Datos cargados en modal de edición:', btn.dataset);
-           }
-       } catch (error) {
-           console.error('Error cargando datos de edición:', error);
-       }
-   }
+    // ✅ FUNCIÓN CORREGIDA - REEMPLAZAR LA ANTERIOR
+function cargarDatosEdicion(event) {  // ✅ AÑADIR 'event' como parámetro
+    const button = event.relatedTarget; // Botón que activó el modal
+    const data = $(button).data();
+    
+    console.log('🔍 DEBUG - Datos del botón:', data); // Para debug
+    
+    // Cargar datos básicos
+    $('#edit_id').val(data.id || '');
+    $('#edit_cedula').val(data.cedula || '');
+    $('#edit_username').val(data.username || '');
+    $('#edit_nombres').val(data.nombres || '');
+    $('#edit_apellidos').val(data.apellidos || '');
+    $('#edit_sexo').val(data.sexo || '');
+    $('#edit_nacionalidadSelect').val(data.nacionalidad || '').trigger('change');
+    $('#edit_correo').val(data.correo || '');
+    $('#edit_rol').val(data.rol || '');
+    $('#edit_estado').val(data.estado || '');
+    
+    // ✅ NUEVOS CAMPOS
+    $('#edit_telefono_contacto').val(data.telefono_contacto || '');
+    $('#edit_direccion_domicilio').val(data.direccion_domicilio || '');
+    
+    // ✅ FECHA DE VERIFICACIÓN (convertir formato si existe)
+    if (data.fecha_verificacion && data.fecha_verificacion !== '0000-00-00 00:00:00') {
+        const fechaFormateada = data.fecha_verificacion.replace(' ', 'T').substring(0, 16);
+        $('#edit_fecha_verificacion').val(fechaFormateada);
+    } else {
+        $('#edit_fecha_verificacion').val('');
+    }
+}
+
+// ✅ TAMBIÉN CORREGIR ESTA FUNCIÓN
+function cargarDatosEliminacion(event) {  // ✅ AÑADIR 'event' como parámetro
+    const button = event.relatedTarget;
+    const data = $(button).data();
+    
+    $('#delete_id').val(data.id || '');
+    $('#delete_username').text(data.username || 'Usuario desconocido');
+}
    
    // Cargar datos en modal de eliminación
    function cargarDatosEliminacion(e) {
@@ -1002,30 +1015,27 @@ function validarFormulario(formId) {
     return isValid;
 }
    
-   // BUSCAR y REEMPLAZAR la función limpiarFormulario:
-function limpiarFormulario(formId) {
+   function limpiarFormulario(formId) {
     const form = document.getElementById(formId);
     if (form) {
         form.reset();
         
-        // 🔥 LIMPIAR SOLO SELECT2 EN EDICIÓN
-        if (formId === 'formEditarUsuario') {
-            try {
-                $(form).find('.select2-hidden-accessible').val(null).trigger('change');
-            } catch (error) {
-                console.error('Error limpiando campos Select2:', error);
-            }
+        // Limpiar campos específicos
+        if (formId === 'formCrearUsuario') {
+            $('#telefono_contacto').val('');
+            $('#direccion_domicilio').val('');
+            $('#nacionalidadSelect').val('').trigger('change');
+        } else if (formId === 'formEditarUsuario') {
+            $('#edit_telefono_contacto').val('');
+            $('#edit_direccion_domicilio').val('');
+            $('#edit_fecha_verificacion').val('');
+            $('#edit_nacionalidadSelect').val('').trigger('change');
         }
         
-        // 🔥 DESBLOQUEAR TODOS LOS CAMPOS
-        $(form).find('input, select').prop('disabled', false).prop('readonly', false);
-        $(form).find('input, select').removeClass('bg-light text-muted');
-        
-        // 🔥 LIMPIAR CLASES DE VALIDACIÓN
-        $(form).find('.is-invalid').removeClass('is-invalid');
-        
-        // 🔥 QUITAR BOTÓN DE RESETEO SI EXISTE
-        $('#btnResetearDatos').remove();
+        // Remover clases de validación
+        form.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
+            el.classList.remove('is-invalid', 'is-valid');
+        });
     }
 }
    // Función de escape HTML para prevenir XSS

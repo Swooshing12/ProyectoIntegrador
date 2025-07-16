@@ -209,6 +209,18 @@ if (!isset($usuarios)) {
         </select>
     </div>
 </div>
+<!-- ✅ NUEVOS CAMPOS: Teléfono y Dirección -->
+<div class="col-md-6">
+  <label for="telefono_contacto" class="form-label"><i class="bi bi-telephone-fill me-1"></i> Teléfono de Contacto</label>
+  <input id="telefono_contacto" name="telefono_contacto" type="tel" class="form-control" placeholder="Ej: 0987654321">
+  <div class="form-text">Campo opcional</div>
+</div>
+<div class="col-md-6">
+  <label for="direccion_domicilio" class="form-label"><i class="bi bi-geo-alt-fill me-1"></i> Dirección de Domicilio</label>
+  <textarea id="direccion_domicilio" name="direccion_domicilio" class="form-control" rows="2" placeholder="Dirección completa del domicilio"></textarea>
+  <div class="form-text">Campo opcional</div>
+</div>
+
           <!-- Usuario / Correo -->
           <div class="col-md-6">
             <label for="username" class="form-label"><i class="bi bi-person-badge me-1"></i> Usuario</label>
@@ -291,6 +303,22 @@ if (!isset($usuarios)) {
               </select>
             </div>
           </div>
+          <!-- ✅ NUEVOS CAMPOS EN EDITAR: Teléfono y Dirección -->
+<div class="col-md-6">
+  <label for="edit_telefono_contacto" class="form-label"><i class="bi bi-telephone-fill me-1"></i> Teléfono de Contacto</label>
+  <input id="edit_telefono_contacto" name="telefono_contacto" type="tel" class="form-control" placeholder="Ej: 0987654321">
+</div>
+<div class="col-md-6">
+  <label for="edit_direccion_domicilio" class="form-label"><i class="bi bi-geo-alt-fill me-1"></i> Dirección de Domicilio</label>
+  <textarea id="edit_direccion_domicilio" name="direccion_domicilio" class="form-control" rows="2" placeholder="Dirección completa del domicilio"></textarea>
+</div>
+
+<!-- Campo opcional: Fecha de Verificación (SOLO PARA ADMINISTRADORES) -->
+<div class="col-md-6">
+  <label for="edit_fecha_verificacion" class="form-label"><i class="bi bi-calendar-check me-1"></i> Fecha de Verificación</label>
+  <input id="edit_fecha_verificacion" name="fecha_verificacion" type="datetime-local" class="form-control">
+  <div class="form-text">Dejar vacío si no está verificado</div>
+</div>
           <!-- Usuario / Correo -->
           <div class="col-md-6">
             <label for="edit_username" class="form-label"><i class="bi bi-person-badge me-1"></i> Usuario</label>

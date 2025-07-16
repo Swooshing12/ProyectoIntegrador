@@ -11,8 +11,9 @@ class Usuario {
     public $apellidos;
     public $sexo;
     public $nacionalidad;
-    public $telefono_contacto;      // ✅ NUEVO CAMPO
-    public $direccion_domicilio;    // ✅ NUEVO CAMPO
+    public $telefono_contacto;      // ✅ CAMPO EXISTENTE
+    public $direccion_domicilio;    // ✅ CAMPO EXISTENTE
+    public $fecha_verificacion;     // ✅ NUEVO CAMPO AÑADIDO
     public $correo;
     public $password;
     public $id_rol;
@@ -45,7 +46,7 @@ class Usuario {
     }
 
     /**
-     * 🔹 Crear un nuevo usuario (ACTUALIZADO con nuevos campos)
+     * 🔹 Crear un nuevo usuario (ACTUALIZADO con todos los campos incluyendo fecha_verificacion)
      */
     public function crearUsuario(
         int    $cedula,
@@ -54,19 +55,20 @@ class Usuario {
         string $apellidos,
         string $sexo,
         string $nacionalidad,
-        string $telefono_contacto,    // ✅ NUEVO PARÁMETRO
-        string $direccion_domicilio,  // ✅ NUEVO PARÁMETRO
+        string $telefono_contacto,    // ✅ PARÁMETRO EXISTENTE
+        string $direccion_domicilio,  // ✅ PARÁMETRO EXISTENTE
         string $correo,
         string $password,
-        int    $id_rol
+        int    $id_rol,
+        string $fecha_verificacion = null  // ✅ NUEVO PARÁMETRO
     ): bool {
         $hash = password_hash($password, PASSWORD_BCRYPT);
         $estadoPendiente = 3;
 
         $query = "INSERT INTO usuarios 
-            (cedula, username, nombres, apellidos, sexo, nacionalidad, telefono_contacto, direccion_domicilio, correo, password, id_rol, id_estado)
+            (cedula, username, nombres, apellidos, sexo, nacionalidad, telefono_contacto, direccion_domicilio, fecha_verificacion, correo, password, id_rol, id_estado)
           VALUES
-            (:cedula, :username, :nombres, :apellidos, :sexo, :nacionalidad, :telefono_contacto, :direccion_domicilio, :correo, :password, :id_rol, :id_estado)";
+            (:cedula, :username, :nombres, :apellidos, :sexo, :nacionalidad, :telefono_contacto, :direccion_domicilio, :fecha_verificacion, :correo, :password, :id_rol, :id_estado)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":cedula",             $cedula,             PDO::PARAM_INT);
         $stmt->bindParam(":username",           $username);
@@ -74,8 +76,9 @@ class Usuario {
         $stmt->bindParam(":apellidos",          $apellidos);
         $stmt->bindParam(":sexo",               $sexo);
         $stmt->bindParam(":nacionalidad",       $nacionalidad);
-        $stmt->bindParam(":telefono_contacto",  $telefono_contacto);    // ✅ NUEVO BIND
-        $stmt->bindParam(":direccion_domicilio", $direccion_domicilio); // ✅ NUEVO BIND
+        $stmt->bindParam(":telefono_contacto",  $telefono_contacto);
+        $stmt->bindParam(":direccion_domicilio", $direccion_domicilio);
+        $stmt->bindParam(":fecha_verificacion", $fecha_verificacion); // ✅ NUEVO BIND
         $stmt->bindParam(":correo",             $correo);
         $stmt->bindParam(":password",           $hash);
         $stmt->bindParam(":id_rol",             $id_rol,             PDO::PARAM_INT);
@@ -85,7 +88,7 @@ class Usuario {
     }
 
     /**
-     * 🔹 Editar usuario (ACTUALIZADO con nuevos campos)
+     * 🔹 Editar usuario (ACTUALIZADO con todos los campos incluyendo fecha_verificacion)
      */
     public function editarUsuario(
         int    $id_usuario,
@@ -95,11 +98,12 @@ class Usuario {
         string $apellidos,
         string $sexo,
         string $nacionalidad,
-        string $telefono_contacto,    // ✅ NUEVO PARÁMETRO
-        string $direccion_domicilio,  // ✅ NUEVO PARÁMETRO
+        string $telefono_contacto,    // ✅ PARÁMETRO EXISTENTE
+        string $direccion_domicilio,  // ✅ PARÁMETRO EXISTENTE
         string $correo,
         int    $id_rol,
-        int    $id_estado
+        int    $id_estado,
+        string $fecha_verificacion = null // ✅ NUEVO PARÁMETRO
     ): bool {
         $query = "UPDATE usuarios SET
             cedula             = :cedula,
@@ -108,8 +112,9 @@ class Usuario {
             apellidos          = :apellidos,
             sexo               = :sexo,
             nacionalidad       = :nacionalidad,
-            telefono_contacto  = :telefono_contacto,   -- ✅ NUEVO CAMPO
-            direccion_domicilio = :direccion_domicilio, -- ✅ NUEVO CAMPO
+            telefono_contacto  = :telefono_contacto,
+            direccion_domicilio = :direccion_domicilio,
+            fecha_verificacion = :fecha_verificacion, -- ✅ NUEVO CAMPO
             correo             = :correo,
             id_rol             = :id_rol,
             id_estado          = :id_estado
@@ -121,8 +126,9 @@ class Usuario {
         $stmt->bindParam(":apellidos",          $apellidos);
         $stmt->bindParam(":sexo",               $sexo);
         $stmt->bindParam(":nacionalidad",       $nacionalidad);
-        $stmt->bindParam(":telefono_contacto",  $telefono_contacto);    // ✅ NUEVO BIND
-        $stmt->bindParam(":direccion_domicilio", $direccion_domicilio); // ✅ NUEVO BIND
+        $stmt->bindParam(":telefono_contacto",  $telefono_contacto);
+        $stmt->bindParam(":direccion_domicilio", $direccion_domicilio);
+        $stmt->bindParam(":fecha_verificacion", $fecha_verificacion); // ✅ NUEVO BIND
         $stmt->bindParam(":correo",             $correo);
         $stmt->bindParam(":id_rol",             $id_rol,             PDO::PARAM_INT);
         $stmt->bindParam(":id_estado",          $id_estado,          PDO::PARAM_INT);
@@ -208,7 +214,8 @@ class Usuario {
         if ($id_estado !== null) {
             $query = "SELECT 
                         id_usuario, cedula, username, nombres, apellidos,
-                        sexo, nacionalidad, telefono_contacto, direccion_domicilio, correo, id_rol, id_estado
+                        sexo, nacionalidad, telefono_contacto, direccion_domicilio, 
+                        fecha_verificacion, correo, id_rol, id_estado
                       FROM usuarios
                       WHERE id_estado = :estado";
             $stmt = $this->conn->prepare($query);
@@ -216,7 +223,8 @@ class Usuario {
         } else {
             $query = "SELECT 
                         id_usuario, cedula, username, nombres, apellidos,
-                        sexo, nacionalidad, telefono_contacto, direccion_domicilio, correo, id_rol, id_estado
+                        sexo, nacionalidad, telefono_contacto, direccion_domicilio, 
+                        fecha_verificacion, correo, id_rol, id_estado
                       FROM usuarios";
             $stmt = $this->conn->query($query);
         }
@@ -330,12 +338,15 @@ class Usuario {
         }
     }
 
+    /**
+     * 🔹 Crear usuario con array de datos (ACTUALIZADO con fecha_verificacion)
+     */
     public function crear(array $datos): int {
         try {
             $query = "INSERT INTO usuarios 
-                (cedula, username, nombres, apellidos, sexo, nacionalidad, telefono_contacto, direccion_domicilio, correo, password, id_rol, id_estado)
+                (cedula, username, nombres, apellidos, sexo, nacionalidad, telefono_contacto, direccion_domicilio, fecha_verificacion, correo, password, id_rol, id_estado)
               VALUES
-                (:cedula, :username, :nombres, :apellidos, :sexo, :nacionalidad, :telefono_contacto, :direccion_domicilio, :correo, :password, :id_rol, :id_estado)";
+                (:cedula, :username, :nombres, :apellidos, :sexo, :nacionalidad, :telefono_contacto, :direccion_domicilio, :fecha_verificacion, :correo, :password, :id_rol, :id_estado)";
             
             $stmt = $this->conn->prepare($query);
             $stmt->execute([
@@ -345,8 +356,9 @@ class Usuario {
                 ':apellidos' => $datos['apellidos'],
                 ':sexo' => $datos['sexo'],
                 ':nacionalidad' => $datos['nacionalidad'],
-                ':telefono_contacto' => $datos['telefono_contacto'] ?? '',    // ✅ NUEVO CAMPO
-                ':direccion_domicilio' => $datos['direccion_domicilio'] ?? '', // ✅ NUEVO CAMPO
+                ':telefono_contacto' => $datos['telefono_contacto'] ?? '',
+                ':direccion_domicilio' => $datos['direccion_domicilio'] ?? '',
+                ':fecha_verificacion' => $datos['fecha_verificacion'] ?? null, // ✅ NUEVO CAMPO
                 ':correo' => $datos['correo'],
                 ':password' => $datos['password'],
                 ':id_rol' => $datos['id_rol'],
@@ -437,7 +449,7 @@ class Usuario {
     }
 
     /**
-     * Actualizar contraseña de un usuario
+     * 🔹 Actualizar contraseña de un usuario
      */
     public function actualizarPassword($id_usuario, $nueva_password) {
         try {
@@ -460,6 +472,86 @@ class Usuario {
         } catch (PDOException $e) {
             error_log("Error actualizando contraseña: " . $e->getMessage());
             throw new Exception("Error al actualizar la contraseña");
+        }
+    }
+
+    /**
+     * 🔹 Verificar cuenta de usuario (actualizar fecha_verificacion)
+     */
+    public function verificarCuenta(int $id_usuario): bool {
+        try {
+            $fechaActual = date('Y-m-d H:i:s');
+            $query = "UPDATE usuarios SET 
+                        fecha_verificacion = :fecha_verificacion,
+                        id_estado = 1 
+                      WHERE id_usuario = :id_usuario";
+            
+            $stmt = $this->conn->prepare($query);
+            $resultado = $stmt->execute([
+                ':fecha_verificacion' => $fechaActual,
+                ':id_usuario' => $id_usuario
+            ]);
+            
+            if ($resultado) {
+                error_log("✅ Cuenta verificada para usuario ID: $id_usuario");
+                return true;
+            } else {
+                error_log("❌ Error verificando cuenta para usuario ID: $id_usuario");
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            error_log("Error verificando cuenta: " . $e->getMessage());
+            throw new Exception("Error al verificar la cuenta");
+        }
+    }
+
+    /**
+     * 🔹 Actualizar fecha de verificación específica
+     */
+    public function actualizarFechaVerificacion(int $id_usuario, string $fecha_verificacion = null): bool {
+        try {
+            if ($fecha_verificacion === null) {
+                $fecha_verificacion = date('Y-m-d H:i:s');
+            }
+            
+            $query = "UPDATE usuarios SET fecha_verificacion = :fecha_verificacion WHERE id_usuario = :id_usuario";
+            
+            $stmt = $this->conn->prepare($query);
+            $resultado = $stmt->execute([
+                ':fecha_verificacion' => $fecha_verificacion,
+                ':id_usuario' => $id_usuario
+            ]);
+            
+            if ($resultado) {
+                error_log("✅ Fecha de verificación actualizada para usuario ID: $id_usuario");
+                return true;
+            } else {
+                error_log("❌ Error actualizando fecha de verificación para usuario ID: $id_usuario");
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            error_log("Error actualizando fecha de verificación: " . $e->getMessage());
+            throw new Exception("Error al actualizar la fecha de verificación");
+        }
+    }
+
+    /**
+     * 🔹 Verificar si usuario está verificado
+     */
+    public function estaVerificado(int $id_usuario): bool {
+        try {
+            $query = "SELECT fecha_verificacion FROM usuarios WHERE id_usuario = :id_usuario";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':id_usuario' => $id_usuario]);
+            
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado && $resultado['fecha_verificacion'] !== null;
+            
+        } catch (PDOException $e) {
+            error_log("Error verificando estado de verificación: " . $e->getMessage());
+            return false;
         }
     }
 }

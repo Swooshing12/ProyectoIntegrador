@@ -32,67 +32,75 @@ class Denuncias {
     }
     
     /**
-     * Crear nueva denuncia
-     */
-    public function crear() {
-        try {
-            $query = "INSERT INTO denuncias (
-                titulo, descripcion, id_categoria, id_usuario_denunciante,
-                provincia, canton, parroquia, direccion_especifica,
-                fecha_ocurrencia, gravedad, servidor_municipal, entidad_municipal,
-                informacion_adicional_denunciado, requiere_atencion_prioritaria,
-                acepta_politica_privacidad
-            ) VALUES (
-                :titulo, :descripcion, :id_categoria, :id_usuario_denunciante,
-                :provincia, :canton, :parroquia, :direccion_especifica,
-                :fecha_ocurrencia, :gravedad, :servidor_municipal, :entidad_municipal,
-                :informacion_adicional_denunciado, :requiere_atencion_prioritaria,
-                :acepta_politica_privacidad
-            )";
-            
-            $stmt = $this->conn->prepare($query);
-            
-            // Limpiar datos
-            $this->titulo = htmlspecialchars(strip_tags($this->titulo));
-            $this->descripcion = htmlspecialchars(strip_tags($this->descripcion));
-            $this->provincia = htmlspecialchars(strip_tags($this->provincia));
-            $this->canton = htmlspecialchars(strip_tags($this->canton));
-            $this->parroquia = htmlspecialchars(strip_tags($this->parroquia));
-            $this->direccion_especifica = htmlspecialchars(strip_tags($this->direccion_especifica));
-            $this->servidor_municipal = htmlspecialchars(strip_tags($this->servidor_municipal));
-            $this->entidad_municipal = htmlspecialchars(strip_tags($this->entidad_municipal));
-            $this->informacion_adicional_denunciado = htmlspecialchars(strip_tags($this->informacion_adicional_denunciado));
-            
-            // Bind parameters
-            $stmt->bindParam(':titulo', $this->titulo);
-            $stmt->bindParam(':descripcion', $this->descripcion);
-            $stmt->bindParam(':id_categoria', $this->id_categoria);
-            $stmt->bindParam(':id_usuario_denunciante', $this->id_usuario_denunciante);
-            $stmt->bindParam(':provincia', $this->provincia);
-            $stmt->bindParam(':canton', $this->canton);
-            $stmt->bindParam(':parroquia', $this->parroquia);
-            $stmt->bindParam(':direccion_especifica', $this->direccion_especifica);
-            $stmt->bindParam(':fecha_ocurrencia', $this->fecha_ocurrencia);
-            $stmt->bindParam(':gravedad', $this->gravedad);
-            $stmt->bindParam(':servidor_municipal', $this->servidor_municipal);
-            $stmt->bindParam(':entidad_municipal', $this->entidad_municipal);
-            $stmt->bindParam(':informacion_adicional_denunciado', $this->informacion_adicional_denunciado);
-            $stmt->bindParam(':requiere_atencion_prioritaria', $this->requiere_atencion_prioritaria, PDO::PARAM_BOOL);
-            $stmt->bindParam(':acepta_politica_privacidad', $this->acepta_politica_privacidad, PDO::PARAM_BOOL);
-            
-            if ($stmt->execute()) {
-                $this->id_denuncia = $this->conn->lastInsertId();
-                return $this->id_denuncia;
-            }
-            
-            return false;
-            
-        } catch (PDOException $e) {
-            error_log("Error creando denuncia: " . $e->getMessage());
-            return false;
+ * Crear nueva denuncia
+ */
+public function crear() {
+    try {
+        // ✅ AGREGAR estado por defecto
+        if (empty($this->id_estado_denuncia)) {
+            $this->id_estado_denuncia = 1; // Estado "Pendiente"
         }
+        
+        $query = "INSERT INTO denuncias (
+            titulo, descripcion, id_categoria, id_usuario_denunciante,
+            id_estado_denuncia, provincia, canton, parroquia, direccion_especifica,
+            fecha_ocurrencia, gravedad, servidor_municipal, entidad_municipal,
+            informacion_adicional_denunciado, requiere_atencion_prioritaria,
+            acepta_politica_privacidad
+        ) VALUES (
+            :titulo, :descripcion, :id_categoria, :id_usuario_denunciante,
+            :id_estado_denuncia, :provincia, :canton, :parroquia, :direccion_especifica,
+            :fecha_ocurrencia, :gravedad, :servidor_municipal, :entidad_municipal,
+            :informacion_adicional_denunciado, :requiere_atencion_prioritaria,
+            :acepta_politica_privacidad
+        )";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        // Limpiar y preparar datos
+        $this->titulo = htmlspecialchars(strip_tags($this->titulo ?? 'Sin título'));
+        $this->descripcion = htmlspecialchars(strip_tags($this->descripcion));
+        $this->provincia = htmlspecialchars(strip_tags($this->provincia));
+        $this->canton = htmlspecialchars(strip_tags($this->canton));
+        $this->parroquia = htmlspecialchars(strip_tags($this->parroquia ?? ''));
+        $this->direccion_especifica = htmlspecialchars(strip_tags($this->direccion_especifica ?? ''));
+        $this->servidor_municipal = htmlspecialchars(strip_tags($this->servidor_municipal ?? ''));
+        $this->entidad_municipal = htmlspecialchars(strip_tags($this->entidad_municipal ?? ''));
+        $this->informacion_adicional_denunciado = htmlspecialchars(strip_tags($this->informacion_adicional_denunciado ?? ''));
+        
+        // ✅ BIND TODOS LOS PARÁMETROS CORRECTAMENTE
+        $stmt->bindParam(':titulo', $this->titulo);
+        $stmt->bindParam(':descripcion', $this->descripcion);
+        $stmt->bindParam(':id_categoria', $this->id_categoria, PDO::PARAM_INT);
+        $stmt->bindParam(':id_usuario_denunciante', $this->id_usuario_denunciante, PDO::PARAM_INT);
+        $stmt->bindParam(':id_estado_denuncia', $this->id_estado_denuncia, PDO::PARAM_INT); // ✅ FALTABA ESTE
+        $stmt->bindParam(':provincia', $this->provincia);
+        $stmt->bindParam(':canton', $this->canton);
+        $stmt->bindParam(':parroquia', $this->parroquia);
+        $stmt->bindParam(':direccion_especifica', $this->direccion_especifica);
+        $stmt->bindParam(':fecha_ocurrencia', $this->fecha_ocurrencia);
+        $stmt->bindParam(':gravedad', $this->gravedad);
+        $stmt->bindParam(':servidor_municipal', $this->servidor_municipal);
+        $stmt->bindParam(':entidad_municipal', $this->entidad_municipal);
+        $stmt->bindParam(':informacion_adicional_denunciado', $this->informacion_adicional_denunciado);
+        $stmt->bindParam(':requiere_atencion_prioritaria', $this->requiere_atencion_prioritaria, PDO::PARAM_BOOL);
+        $stmt->bindParam(':acepta_politica_privacidad', $this->acepta_politica_privacidad, PDO::PARAM_BOOL);
+        
+        if ($stmt->execute()) {
+            $this->id_denuncia = $this->conn->lastInsertId();
+            error_log("✅ Denuncia creada exitosamente con ID: " . $this->id_denuncia);
+            return $this->id_denuncia;
+        }
+        
+        error_log("❌ Error ejecutando query de denuncia");
+        return false;
+        
+    } catch (PDOException $e) {
+        error_log("❌ Error PDO creando denuncia: " . $e->getMessage());
+        error_log("❌ Query que falló: " . $query);
+        return false;
     }
-    
+}
     /**
      * Obtener denuncia por ID
      */

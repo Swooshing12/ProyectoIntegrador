@@ -20,31 +20,51 @@ class EvidenciasDenuncia {
     }
     
     /**
-     * Crear nueva evidencia
-     */
-    public function crear() {
+ * Crear nueva evidencia
+ */
+public function crear() {
+    try {
         $query = "INSERT INTO evidencias_denuncia (
                     id_denuncia, tipo_evidencia, nombre_archivo, ruta_archivo,
                     tamaño_archivo, descripcion, subido_por
                   ) VALUES (
                     :id_denuncia, :tipo_evidencia, :nombre_archivo, :ruta_archivo,
-                    :tamaño_archivo, :descripcion, :subido_por
+                    :tamano_archivo, :descripcion, :subido_por
                   )";
         
         $stmt = $this->conn->prepare($query);
+        
+        // ✅ VERIFICAR que todas las propiedades estén definidas
+        error_log("🔍 DEBUG Evidencia - ID Denuncia: " . $this->id_denuncia);
+        error_log("🔍 DEBUG Evidencia - Tipo: " . $this->tipo_evidencia);
+        error_log("🔍 DEBUG Evidencia - Nombre: " . $this->nombre_archivo);
+        error_log("🔍 DEBUG Evidencia - Ruta: " . $this->ruta_archivo);
+        error_log("🔍 DEBUG Evidencia - Tamaño: " . $this->tamaño_archivo);
+        error_log("🔍 DEBUG Evidencia - Subido por: " . $this->subido_por);
+        
         $stmt->bindParam(':id_denuncia', $this->id_denuncia, PDO::PARAM_INT);
         $stmt->bindParam(':tipo_evidencia', $this->tipo_evidencia);
         $stmt->bindParam(':nombre_archivo', $this->nombre_archivo);
         $stmt->bindParam(':ruta_archivo', $this->ruta_archivo);
-        $stmt->bindParam(':tamaño_archivo', $this->tamaño_archivo, PDO::PARAM_INT);
+        $stmt->bindParam(':tamano_archivo', $this->tamaño_archivo, PDO::PARAM_INT); // ✅ SIN TILDE
         $stmt->bindParam(':descripcion', $this->descripcion);
         $stmt->bindParam(':subido_por', $this->subido_por, PDO::PARAM_INT);
         
         if ($stmt->execute()) {
-            return $this->conn->lastInsertId();
+            $evidencia_id = $this->conn->lastInsertId();
+            error_log("✅ Evidencia guardada con ID: " . $evidencia_id);
+            return $evidencia_id;
         }
+        
+        error_log("❌ Error ejecutando INSERT de evidencia");
         return false;
+        
+    } catch (PDOException $e) {
+        error_log("❌ Error SQL en evidencias: " . $e->getMessage());
+        error_log("❌ Query: " . ($query ?? 'Query no definida'));
+        throw $e;
     }
+}
     
     /**
      * Obtener evidencias por denuncia

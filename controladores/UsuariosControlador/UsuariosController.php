@@ -194,263 +194,281 @@ class UsuariosController {
     }
     
     private function crear() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->responderJSON([
-                'success' => false, 
-                'message' => 'Método no permitido'
-            ]);
-            return;
-        }
-        
-        // Verificar permisos
-        $this->verificarPermisos('crear');
-        
-        // Validar datos requeridos
-        $camposRequeridos = ['cedula', 'username', 'nombres', 'apellidos', 'sexo', 'nacionalidad', 'correo', 'rol']; // 🔥 QUITAR 'password'
-        $camposFaltantes = [];
-        
-        foreach ($camposRequeridos as $campo) {
-            if (empty($_POST[$campo])) {
-                $camposFaltantes[] = $campo;
-            }
-        }
-        
-        if (!empty($camposFaltantes)) {
-            $this->responderJSON([
-                'success' => false,
-                'message' => "Campos requeridos: " . implode(', ', $camposFaltantes),
-                'campos_faltantes' => $camposFaltantes
-            ]);
-            return;
-        }
-        
-        // Validaciones básicas (mantener las existentes)
-        if (!is_numeric($_POST['cedula']) || strlen($_POST['cedula']) < 10) {
-            $this->responderJSON([
-                'success' => false,
-                'message' => 'La cédula debe tener al menos 10 dígitos numéricos',
-                'campo_error' => 'cedula'
-            ]);
-            return;
-        }
-        
-        if (!filter_var($_POST['correo'], FILTER_VALIDATE_EMAIL)) {
-            $this->responderJSON([
-                'success' => false,
-                'message' => 'Formato de correo electrónico no válido',
-                'campo_error' => 'correo'
-            ]);
-            return;
-        }
-        
-        try {
-            // Verificar si el username ya existe
-            $usuarioExistente = $this->usuarioModel->obtenerPorUsername(trim($_POST['username']));
-            if ($usuarioExistente) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'El nombre de usuario ya está en uso',
-                    'campo_error' => 'username'
-                ]);
-                return;
-            }
-            
-            // Verificar si el correo ya existe
-            $correoExistente = $this->usuarioModel->obtenerPorCorreo(trim($_POST['correo']));
-            if ($correoExistente) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'El correo electrónico ya está registrado',
-                    'campo_error' => 'correo'
-                ]);
-                return;
-            }
-            
-            // 🔥 GENERAR CONTRASEÑA TEMPORAL
-            $passwordTemporal = MailService::generarPasswordTemporal(12);
-            
-            // Crear usuario con contraseña temporal
-            $resultado = $this->usuarioModel->crearUsuario(
-                (int)$_POST['cedula'],
-                trim($_POST['username']),
-                trim($_POST['nombres']),
-                trim($_POST['apellidos']),
-                $_POST['sexo'],
-                trim($_POST['nacionalidad']),
-                trim($_POST['correo']),
-                $passwordTemporal, // 🔥 USAR CONTRASEÑA TEMPORAL
-                (int)$_POST['rol']
-            );
-            
-            if ($resultado) {
-                // 🔥 ENVIAR CORREO CON CONTRASEÑA TEMPORAL
-                $nombreCompleto = trim($_POST['nombres']) . ' ' . trim($_POST['apellidos']);
-                $envioExitoso = $this->mailService->enviarPasswordTemporal(
-                    trim($_POST['correo']),
-                    $nombreCompleto,
-                    trim($_POST['username']),
-                    $passwordTemporal
-                );
-                
-                if ($envioExitoso) {
-                    $this->responderJSON([
-                        'success' => true,
-                        'message' => 'Usuario creado exitosamente. Se ha enviado un correo con las credenciales de acceso.',
-                        'email_enviado' => true
-                    ]);
-                } else {
-                    $this->responderJSON([
-                        'success' => true,
-                        'message' => 'Usuario creado exitosamente, pero hubo un problema enviando el correo. Contacta al administrador.',
-                        'email_enviado' => false
-                    ]);
-                }
-            } else {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'Error al crear el usuario'
-                ]);
-            }
-        } catch (Exception $e) {
-            $this->responderJSON([
-                'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
-            ]);
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        $this->responderJSON([
+            'success' => false, 
+            'message' => 'Método no permitido'
+        ]);
+        return;
+    }
+    
+    // Verificar permisos
+    $this->verificarPermisos('crear');
+    
+    // Validar datos requeridos (ACTUALIZADOS con nuevos campos)
+    $camposRequeridos = ['cedula', 'username', 'nombres', 'apellidos', 'sexo', 'nacionalidad', 'correo', 'rol'];
+    $camposFaltantes = [];
+    
+    foreach ($camposRequeridos as $campo) {
+        if (empty($_POST[$campo])) {
+            $camposFaltantes[] = $campo;
         }
     }
     
-    private function editar() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if (!empty($camposFaltantes)) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => "Campos requeridos: " . implode(', ', $camposFaltantes),
+            'campos_faltantes' => $camposFaltantes
+        ]);
+        return;
+    }
+    
+    // Validaciones básicas (mantener las existentes)
+    if (!is_numeric($_POST['cedula']) || strlen($_POST['cedula']) < 10) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'La cédula debe tener al menos 10 dígitos numéricos',
+            'campo_error' => 'cedula'
+        ]);
+        return;
+    }
+    
+    if (!filter_var($_POST['correo'], FILTER_VALIDATE_EMAIL)) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Formato de correo electrónico no válido',
+            'campo_error' => 'correo'
+        ]);
+        return;
+    }
+    
+    try {
+        // Verificar si el username ya existe
+        $usuarioExistente = $this->usuarioModel->obtenerPorUsername(trim($_POST['username']));
+        if ($usuarioExistente) {
             $this->responderJSON([
-                'success' => false, 
-                'message' => 'Método no permitido'
+                'success' => false,
+                'message' => 'El nombre de usuario ya está en uso',
+                'campo_error' => 'username'
             ]);
             return;
         }
         
-        // Verificar permisos
-        $this->verificarPermisos('editar');
-        
-        // Validar datos requeridos
-        $camposRequeridos = ['id_usuario', 'cedula', 'username', 'nombres', 'apellidos', 'sexo', 'nacionalidad', 'correo', 'rol', 'estado'];
-        $camposFaltantes = [];
-        
-        foreach ($camposRequeridos as $campo) {
-            if (!isset($_POST[$campo]) || $_POST[$campo] === '') {
-                $camposFaltantes[] = $campo;
-            }
-        }
-        
-        if (!empty($camposFaltantes)) {
+        // Verificar si el correo ya existe
+        $correoExistente = $this->usuarioModel->obtenerPorCorreo(trim($_POST['correo']));
+        if ($correoExistente) {
             $this->responderJSON([
                 'success' => false,
-                'message' => "Campos requeridos: " . implode(', ', $camposFaltantes),
-                'campos_faltantes' => $camposFaltantes
-            ]);
-            return;
-        }
-        
-        // Validaciones básicas
-        if (!is_numeric($_POST['cedula']) || strlen($_POST['cedula']) < 10) {
-            $this->responderJSON([
-                'success' => false,
-                'message' => 'La cédula debe tener al menos 10 dígitos numéricos',
-                'campo_error' => 'cedula'
-            ]);
-            return;
-        }
-        
-        if (!filter_var($_POST['correo'], FILTER_VALIDATE_EMAIL)) {
-            $this->responderJSON([
-                'success' => false,
-                'message' => 'Formato de correo electrónico no válido',
+                'message' => 'El correo electrónico ya está registrado',
                 'campo_error' => 'correo'
             ]);
             return;
         }
         
-        try {
-            $id_usuario = (int)$_POST['id_usuario'];
-            
-            // Verificar si el usuario existe
-            $usuarioActual = $this->usuarioModel->obtenerPorId($id_usuario);
-            if (!$usuarioActual) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'El usuario que intenta editar no existe'
-                ]);
-                return;
-            }
-            
-            // Verificar si el username ya existe en otro usuario
-            $usuarioExistente = $this->usuarioModel->obtenerPorUsername(trim($_POST['username']));
-            if ($usuarioExistente && $usuarioExistente['id_usuario'] != $id_usuario) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'El nombre de usuario ya está en uso por otro usuario',
-                    'campo_error' => 'username'
-                ]);
-                return;
-            }
-            
-            // Verificar si el correo ya existe en otro usuario
-            $correoExistente = $this->usuarioModel->obtenerPorCorreo(trim($_POST['correo']));
-            if ($correoExistente && $correoExistente['id_usuario'] != $id_usuario) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'El correo electrónico ya está registrado por otro usuario',
-                    'campo_error' => 'correo'
-                ]);
-                return;
-            }
-            
-            // Editar usuario
-            $resultado = $this->usuarioModel->editarUsuario(
-                $id_usuario,
-                (int)$_POST['cedula'],
-                trim($_POST['username']),
-                trim($_POST['nombres']),
-                trim($_POST['apellidos']),
-                $_POST['sexo'],
-                trim($_POST['nacionalidad']),
+        // 🔥 GENERAR CONTRASEÑA TEMPORAL
+        $passwordTemporal = MailService::generarPasswordTemporal(12);
+        
+        // ✅ PROCESAR NUEVOS CAMPOS OPCIONALES
+        $telefonoContacto = trim($_POST['telefono_contacto'] ?? '');
+        $direccionDomicilio = trim($_POST['direccion_domicilio'] ?? '');
+        
+        // Crear usuario con contraseña temporal (ACTUALIZADO CON NUEVOS CAMPOS)
+        $resultado = $this->usuarioModel->crearUsuario(
+            (int)$_POST['cedula'],
+            trim($_POST['username']),
+            trim($_POST['nombres']),
+            trim($_POST['apellidos']),
+            $_POST['sexo'],
+            trim($_POST['nacionalidad']),
+            $telefonoContacto,      // ✅ NUEVO CAMPO
+            $direccionDomicilio,    // ✅ NUEVO CAMPO
+            trim($_POST['correo']),
+            $passwordTemporal,      // 🔥 USAR CONTRASEÑA TEMPORAL
+            (int)$_POST['rol']
+        );
+        
+        if ($resultado) {
+            // 🔥 ENVIAR CORREO CON CONTRASEÑA TEMPORAL
+            $nombreCompleto = trim($_POST['nombres']) . ' ' . trim($_POST['apellidos']);
+            $envioExitoso = $this->mailService->enviarPasswordTemporal(
                 trim($_POST['correo']),
-                (int)$_POST['rol'],
-                (int)$_POST['estado']
+                $nombreCompleto,
+                trim($_POST['username']),
+                $passwordTemporal
             );
             
-            // Cambiar contraseña si se proporcionó
-            if (!empty($_POST['password'])) {
-                if (strlen($_POST['password']) < 6) {
-                    $this->responderJSON([
-                        'success' => false,
-                        'message' => 'La nueva contraseña debe tener al menos 6 caracteres',
-                        'campo_error' => 'password'
-                    ]);
-                    return;
-                }
-                
-                $this->usuarioModel->cambiarPassword($id_usuario, $_POST['password']);
-            }
-            
-            if ($resultado) {
+            if ($envioExitoso) {
                 $this->responderJSON([
                     'success' => true,
-                    'message' => 'Usuario actualizado exitosamente'
+                    'message' => 'Usuario creado exitosamente. Se ha enviado un correo con las credenciales de acceso.',
+                    'email_enviado' => true
                 ]);
             } else {
                 $this->responderJSON([
-                    'success' => false,
-                    'message' => 'Error al actualizar el usuario'
+                    'success' => true,
+                    'message' => 'Usuario creado exitosamente, pero hubo un problema enviando el correo. Contacta al administrador.',
+                    'email_enviado' => false
                 ]);
             }
-        } catch (Exception $e) {
+        } else {
             $this->responderJSON([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Error al crear el usuario'
             ]);
+        }
+    } catch (Exception $e) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+    }
+}
+    
+    private function editar() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        $this->responderJSON([
+            'success' => false, 
+            'message' => 'Método no permitido'
+        ]);
+        return;
+    }
+    
+    // Verificar permisos
+    $this->verificarPermisos('editar');
+    
+    // Validar datos requeridos (ACTUALIZADOS)
+    $camposRequeridos = ['id_usuario', 'cedula', 'username', 'nombres', 'apellidos', 'sexo', 'nacionalidad', 'correo', 'rol', 'estado'];
+    $camposFaltantes = [];
+    
+    foreach ($camposRequeridos as $campo) {
+        if (!isset($_POST[$campo]) || $_POST[$campo] === '') {
+            $camposFaltantes[] = $campo;
         }
     }
     
+    if (!empty($camposFaltantes)) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => "Campos requeridos: " . implode(', ', $camposFaltantes),
+            'campos_faltantes' => $camposFaltantes
+        ]);
+        return;
+    }
+    
+    // Validaciones básicas
+    if (!is_numeric($_POST['cedula']) || strlen($_POST['cedula']) < 10) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'La cédula debe tener al menos 10 dígitos numéricos',
+            'campo_error' => 'cedula'
+        ]);
+        return;
+    }
+    
+    if (!filter_var($_POST['correo'], FILTER_VALIDATE_EMAIL)) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Formato de correo electrónico no válido',
+            'campo_error' => 'correo'
+        ]);
+        return;
+    }
+    
+    try {
+        $id_usuario = (int)$_POST['id_usuario'];
+        
+        // Verificar si el usuario existe
+        $usuarioActual = $this->usuarioModel->obtenerPorId($id_usuario);
+        if (!$usuarioActual) {
+            $this->responderJSON([
+                'success' => false,
+                'message' => 'El usuario que intenta editar no existe'
+            ]);
+            return;
+        }
+        
+        // Verificar si el username ya existe en otro usuario
+        $usuarioExistente = $this->usuarioModel->obtenerPorUsername(trim($_POST['username']));
+        if ($usuarioExistente && $usuarioExistente['id_usuario'] != $id_usuario) {
+            $this->responderJSON([
+                'success' => false,
+                'message' => 'El nombre de usuario ya está en uso por otro usuario',
+                'campo_error' => 'username'
+            ]);
+            return;
+        }
+        
+        // Verificar si el correo ya existe en otro usuario
+        $correoExistente = $this->usuarioModel->obtenerPorCorreo(trim($_POST['correo']));
+        if ($correoExistente && $correoExistente['id_usuario'] != $id_usuario) {
+            $this->responderJSON([
+                'success' => false,
+                'message' => 'El correo electrónico ya está registrado por otro usuario',
+                'campo_error' => 'correo'
+            ]);
+            return;
+        }
+        
+        // ✅ PROCESAR NUEVOS CAMPOS OPCIONALES
+        $telefonoContacto = trim($_POST['telefono_contacto'] ?? '');
+        $direccionDomicilio = trim($_POST['direccion_domicilio'] ?? '');
+        
+        // ✅ PROCESAR FECHA DE VERIFICACIÓN (SI SE PROPORCIONA)
+        $fechaVerificacion = null;
+        if (!empty($_POST['fecha_verificacion'])) {
+            $fechaVerificacion = $_POST['fecha_verificacion'];
+        }
+        
+        // Editar usuario (ACTUALIZADO CON NUEVOS CAMPOS)
+        $resultado = $this->usuarioModel->editarUsuario(
+            $id_usuario,
+            (int)$_POST['cedula'],
+            trim($_POST['username']),
+            trim($_POST['nombres']),
+            trim($_POST['apellidos']),
+            $_POST['sexo'],
+            trim($_POST['nacionalidad']),
+            $telefonoContacto,      // ✅ NUEVO CAMPO
+            $direccionDomicilio,    // ✅ NUEVO CAMPO
+            trim($_POST['correo']),
+            (int)$_POST['rol'],
+            (int)$_POST['estado'],
+            $fechaVerificacion      // ✅ NUEVO CAMPO
+        );
+        
+        // Cambiar contraseña si se proporcionó
+        if (!empty($_POST['password'])) {
+            if (strlen($_POST['password']) < 6) {
+                $this->responderJSON([
+                    'success' => false,
+                    'message' => 'La nueva contraseña debe tener al menos 6 caracteres',
+                    'campo_error' => 'password'
+                ]);
+                return;
+            }
+            
+            $this->usuarioModel->cambiarPassword($id_usuario, $_POST['password']);
+        }
+        
+        if ($resultado) {
+            $this->responderJSON([
+                'success' => true,
+                'message' => 'Usuario actualizado exitosamente'
+            ]);
+        } else {
+            $this->responderJSON([
+                'success' => false,
+                'message' => 'Error al actualizar el usuario'
+            ]);
+        }
+    } catch (Exception $e) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+    }
+}
     private function eliminar() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->responderJSON([
