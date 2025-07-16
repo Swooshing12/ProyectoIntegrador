@@ -19,23 +19,45 @@ unset($_SESSION["alerta"]); // Eliminar alerta después de mostrarla
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cambiar Contraseña</title>
+    <title>EcoReport - Cambiar Contraseña</title>
     <link rel="stylesheet" href="../estilos/cambiarclave.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div class="login-container">
         <h2>Cambiar Contraseña</h2>
+        <p class="subtitle">Establece una nueva contraseña segura para proteger tu cuenta</p>
+        
         <form action="../controladores/CambiarContraseñaControlador/CambiarContraseñaController.php" method="POST">
             <div class="input-group">
-                <label for="password">Nueva Contraseña</label>
-                <input type="password" name="password" required>
+                <label for="password" data-icon="🔒">Nueva Contraseña</label>
+                <div class="input-wrapper">
+                    <input type="password" name="password" id="password" required>
+                    <div class="input-glow"></div>
+                    <div class="input-icon">🔒</div>
+                </div>
+                <div class="password-strength">
+                    <div class="strength-bar"></div>
+                    <div class="strength-bar"></div>
+                    <div class="strength-bar"></div>
+                    <div class="strength-bar"></div>
+                </div>
             </div>
+            
             <div class="input-group">
-                <label for="confirm_password">Confirmar Contraseña</label>
-                <input type="password" name="confirm_password" required>
+                <label for="confirm_password" data-icon="🔐">Confirmar Contraseña</label>
+                <div class="input-wrapper">
+                    <input type="password" name="confirm_password" id="confirm_password" required>
+                    <div class="input-glow"></div>
+                    <div class="input-icon">🔐</div>
+                </div>
             </div>
+            
             <button type="submit">Actualizar Contraseña</button>
+            
+            <div class="security-info">
+                <p>Tu contraseña debe tener al menos 8 caracteres e incluir letras, números y símbolos especiales.</p>
+            </div>
         </form>
     </div>
 
@@ -46,7 +68,7 @@ unset($_SESSION["alerta"]); // Eliminar alerta después de mostrarla
             title: "<?php echo $alerta['titulo']; ?>",
             text: "<?php echo $alerta['mensaje']; ?>",
             icon: "<?php echo $alerta['icono']; ?>",
-            confirmButtonColor: "#d33",
+            confirmButtonColor: "#16a34a",
             confirmButtonText: "Aceptar"
         });
     </script>
@@ -54,5 +76,4 @@ unset($_SESSION["alerta"]); // Eliminar alerta después de mostrarla
 
 </body>
 <script src="<?= BASE_URL ?>/js/bloquear.js"></script>
-
 </html>

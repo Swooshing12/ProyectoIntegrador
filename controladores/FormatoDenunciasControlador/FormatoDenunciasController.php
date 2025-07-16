@@ -156,7 +156,7 @@ class FormatoDenunciasController {
                     
                     if (isset($_FILES['evidencias']) && !empty($_FILES['evidencias']['name'][0])) {
                         error_log("📁 Evidencias detectadas - Procesando array");
-                        $evidencias_procesadas = $this->procesarEvidencias($id_denuncia, $_FILES['evidencias']);
+                    $evidencias_procesadas = $this->procesarEvidencias($id_denuncia, $_FILES['evidencias'], $id_usuario_denunciante);
                         error_log("📁 Evidencias procesadas exitosamente: $evidencias_procesadas");
                     } else {
                         error_log("📁 No hay evidencias para procesar");
@@ -296,7 +296,7 @@ class FormatoDenunciasController {
         }
     }
 
-    private function procesarEvidencias($id_denuncia, $archivos) {
+    private function procesarEvidencias($id_denuncia, $archivos, $id_usuario_denunciante) {
     $procesadas = 0;
     $upload_dir = __DIR__ . '/../../uploads/evidencias/';
     
@@ -335,7 +335,7 @@ class FormatoDenunciasController {
                     $evidenciaModel->ruta_archivo = 'uploads/evidencias/' . $nombre_archivo;
                     $evidenciaModel->tamaño_archivo = $archivos['size'][$i];
                     $evidenciaModel->descripcion = 'Evidencia subida con la denuncia';
-                    $evidenciaModel->subido_por = 1; // ID admin temporal
+                    $evidenciaModel->subido_por = $id_usuario_denunciante; // ✅ USAR EL ID CORRECTO
 
                     if ($evidenciaModel->crear()) {
                         $procesadas++;
@@ -389,7 +389,7 @@ private function procesarEvidenciaSimple($id_denuncia, $archivo) {
             $this->evidenciasModel->ruta_archivo = 'uploads/evidencias/' . $nombre_archivo;
             $this->evidenciasModel->tamaño_archivo = $archivo['size'];
             $this->evidenciasModel->descripcion = 'Evidencia subida con la denuncia';
-            $this->evidenciasModel->subido_por = 1; // ✅ ID usuario admin temporal
+            $this->evidenciasModel->subido_por = $this->denunciasModel->id_usuario_denunciante;
             
             if ($this->evidenciasModel->crear()) {
                 error_log("✅ Evidencia individual guardada: $nombre_original");

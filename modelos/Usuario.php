@@ -554,5 +554,28 @@ class Usuario {
             return false;
         }
     }
+    // Añadir estos métodos a la clase Usuario existente
+
+
+/**
+ * Actualizar contraseña y estado del usuario
+ */
+public function actualizarPasswordYEstado($id_usuario, $password_hash, $id_estado) {
+    try {
+        $query = "UPDATE usuarios 
+                  SET password = :password, id_estado = :id_estado 
+                  WHERE id_usuario = :id_usuario";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':password', $password_hash, PDO::PARAM_STR);
+        $stmt->bindParam(':id_estado', $id_estado, PDO::PARAM_INT);
+        $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        error_log("Error actualizando contraseña y estado: " . $e->getMessage());
+        return false;
+    }
+}
 }
 ?>

@@ -466,6 +466,359 @@ public function enviarConfirmacionDenuncia($destinatario, $nombreCompleto, $nume
             }
     
     
+
+            /**
+ * Enviar contraseña temporal para recuperación
+ */
+public function enviarPasswordRecuperacion($destinatario, $nombreCompleto, $passwordTemporal) {
+    try {
+        // Limpiar destinatarios previos
+        $this->mail->clearAddresses();
+        $this->mail->clearAttachments();
+        
+        // Configurar para EcoReport
+        $this->mail->setFrom($this->config['from_email'], 'EcoReport - Sistema Ambiental');
+        $this->mail->addAddress($destinatario, $nombreCompleto);
+        
+        // Configurar contenido
+        $this->mail->isHTML(true);
+        $this->mail->Subject = "🔐 Recuperación de Contraseña - EcoReport";
+        
+        // Plantilla HTML del correo
+        $htmlBody = $this->generarPlantillaRecuperacionHTML($nombreCompleto, $passwordTemporal);
+        $this->mail->Body = $htmlBody;
+        
+        // Versión en texto plano
+        $this->mail->AltBody = $this->generarRecuperacionTextoPlano($nombreCompleto, $passwordTemporal);
+        
+        // Enviar correo
+        $resultado = $this->mail->send();
+        
+        if ($resultado) {
+            error_log("✅ Contraseña de recuperación enviada exitosamente a: $destinatario");
+            return true;
+        } else {
+            error_log("❌ Error enviando contraseña de recuperación a: $destinatario");
+            return false;
+        }
+        
+    } catch (Exception $e) {
+        error_log("❌ Error en enviarPasswordRecuperacion: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Generar plantilla HTML para recuperación de contraseña
+ */
+private function generarPlantillaRecuperacionHTML($nombreCompleto, $passwordTemporal) {
+    $fechaActual = date('d/m/Y H:i');
+    
+    return "
+    <!DOCTYPE html>
+    <html lang='es'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Recuperación de Contraseña - EcoReport</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                padding: 20px;
+                color: #1e293b;
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background: white; 
+                border-radius: 16px; 
+                overflow: hidden; 
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .header { 
+                background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #10b981 100%);
+                color: white; 
+                padding: 40px 30px; 
+                text-align: center;
+                position: relative;
+            }
+            .header::before {
+                content: '🔐';
+                font-size: 3rem;
+                display: block;
+                margin-bottom: 1rem;
+                animation: pulse 2s infinite;
+            }
+            .header h1 { 
+                margin: 0; 
+                font-size: 28px; 
+                font-weight: 700;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            .header p {
+                margin: 10px 0 0 0;
+                font-size: 16px;
+                opacity: 0.9;
+            }
+            .content { 
+                padding: 40px 30px; 
+                line-height: 1.6;
+            }
+            .greeting {
+                font-size: 20px;
+                color: #16a34a;
+                font-weight: 600;
+                margin-bottom: 20px;
+            }
+            .message {
+                font-size: 16px;
+                color: #475569;
+                margin-bottom: 30px;
+            }
+            .password-container {
+                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                border: 2px dashed #16a34a;
+                border-radius: 12px;
+                padding: 30px;
+                text-align: center;
+                margin: 30px 0;
+                position: relative;
+            }
+            .password-label {
+                font-size: 14px;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 600;
+                margin-bottom: 15px;
+            }
+            .password {
+                font-size: 28px;
+                font-weight: 900;
+                color: #16a34a;
+                font-family: 'Courier New', monospace;
+                letter-spacing: 3px;
+                padding: 15px;
+                background: white;
+                border-radius: 8px;
+                border: 1px solid #d1d5db;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                word-break: break-all;
+            }
+            .instructions {
+                background: linear-gradient(135deg, #fef3cd 0%, #fde68a 100%);
+                border-left: 4px solid #f59e0b;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 25px 0;
+            }
+            .instructions h3 {
+                color: #92400e;
+                font-size: 16px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .instructions ul {
+                color: #a16207;
+                padding-left: 20px;
+            }
+            .instructions li {
+                margin-bottom: 8px;
+                font-size: 14px;
+            }
+            .action-button {
+                text-align: center;
+                margin: 30px 0;
+            }
+            .btn {
+                display: inline-block;
+                background: linear-gradient(135deg, #16a34a, #22c55e);
+                color: white;
+                padding: 15px 30px;
+                text-decoration: none;
+                border-radius: 10px;
+                font-weight: 600;
+                font-size: 16px;
+                box-shadow: 0 4px 6px rgba(22, 163, 74, 0.2);
+                transition: all 0.3s ease;
+            }
+            .security-note {
+                background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+                border: 1px solid #0ea5e9;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 25px 0;
+                text-align: center;
+            }
+            .security-note i {
+                color: #0284c7;
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+            .footer {
+                background: #f8fafc;
+                padding: 30px;
+                text-align: center;
+                border-top: 1px solid #e2e8f0;
+            }
+            .footer-badges {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            .badge {
+                background: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 12px;
+                color: #64748b;
+                border: 1px solid #e2e8f0;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .copyright {
+                color: #64748b;
+                font-size: 14px;
+                margin: 10px 0;
+            }
+            .eco-message {
+                color: #16a34a;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            @media (max-width: 600px) {
+                .container { margin: 10px; border-radius: 12px; }
+                .header, .content { padding: 20px; }
+                .password { font-size: 24px; letter-spacing: 2px; }
+                .footer-badges { flex-direction: column; align-items: center; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h1>Recuperación de Contraseña</h1>
+                <p>Sistema de Denuncias Ambientales</p>
+            </div>
+            
+            <div class='content'>
+                <div class='greeting'>
+                    ¡Hola, {$nombreCompleto}!
+                </div>
+                
+                <div class='message'>
+                    Has solicitado recuperar tu contraseña para acceder al sistema <strong>EcoReport</strong>. 
+                    Hemos generado una contraseña temporal para ti.
+                </div>
+                
+                <div class='password-container'>
+                    <div class='password-label'>Tu Contraseña Temporal</div>
+                    <div class='password'>{$passwordTemporal}</div>
+                </div>
+                
+                <div class='instructions'>
+                    <h3>⚠️ Instrucciones Importantes</h3>
+                    <ul>
+                        <li><strong>Esta contraseña es temporal</strong> y debes cambiarla al iniciar sesión</li>
+                        <li>Tu cuenta estará en estado <em>'Pendiente'</em> hasta que cambies la contraseña</li>
+                        <li>Por seguridad, esta contraseña expirará en <strong>24 horas</strong></li>
+                        <li>No compartas esta información con nadie</li>
+                        <li>Si no solicitaste este cambio, ignora este mensaje</li>
+                    </ul>
+                </div>
+                
+                <div class='action-button'>
+                    <a href='" . BASE_URL . "/vistas/login.php' class='btn'>
+                        🚀 Iniciar Sesión Ahora
+                    </a>
+                </div>
+                
+                <div class='security-note'>
+                    <div style='color: #0284c7; font-size: 20px; margin-bottom: 10px;'>🛡️</div>
+                    <strong>Conexión Segura</strong><br>
+                    Este proceso está protegido con encriptación SSL y cumple con los estándares de seguridad.
+                </div>
+            </div>
+            
+            <div class='footer'>
+                <div class='footer-badges'>
+                    <div class='badge'>
+                        🔒 SSL Protegido
+                    </div>
+                    <div class='badge'>
+                        🌱 Carbono Neutral
+                    </div>
+                    <div class='badge'>
+                        ⚡ Generado: {$fechaActual}
+                    </div>
+                </div>
+                
+                <div class='copyright'>
+                    © 2025 EcoReport - Sistema de Denuncias Ambientales
+                </div>
+                <div class='eco-message'>
+                    🌍 Cuidando el planeta juntos
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>";
+}
+
+/**
+ * Generar versión en texto plano para recuperación
+ */
+private function generarRecuperacionTextoPlano($nombreCompleto, $passwordTemporal) {
+    $fechaActual = date('d/m/Y H:i');
+    
+    return "
+    =============================================
+    🔐 ECOREPORT - RECUPERACIÓN DE CONTRASEÑA
+    =============================================
+    
+    Hola, {$nombreCompleto}
+    
+    Has solicitado recuperar tu contraseña para el sistema EcoReport.
+    
+    TU CONTRASEÑA TEMPORAL: {$passwordTemporal}
+    
+    INSTRUCCIONES IMPORTANTES:
+    - Esta contraseña es TEMPORAL y debes cambiarla al iniciar sesión
+    - Tu cuenta estará en estado 'Pendiente' hasta que la cambies
+    - Por seguridad, expirará en 24 horas
+    - No compartas esta información con nadie
+    
+    ACCESO AL SISTEMA:
+    " . BASE_URL . "/vistas/login.php
+    
+    CONTACTO:
+    📧 soporte@ecoreport.com
+    📱 1-800-ECO-REPORT
+    
+    Si no solicitaste este cambio, ignora este mensaje.
+    
+    ===================================
+    © 2025 EcoReport
+    Sistema de Denuncias Ambientales
+    🌍 Cuidando el planeta juntos
+    
+    Generado: {$fechaActual}
+    Este es un correo automático.
+    ===================================";
+}
+
+
 }
 
 ?>
