@@ -62,7 +62,7 @@ function sidebarSubmenuEstaActivo($submenus, $current_submenu_id) {
             <div class="logo-container">
                 <i class="bi bi-heart-pulse-fill"></i>
             </div>
-            <div class="logo-text">MediSys</div>
+            <div class="logo-text">EcoReport</div>
         </div>
         <button type="button" id="sidebarToggle" class="toggle-btn">
             <i class="bi bi-chevron-left"></i>

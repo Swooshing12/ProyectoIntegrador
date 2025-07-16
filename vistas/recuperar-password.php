@@ -1,11 +1,6 @@
 <?php
 session_start();
 
-// Si ya está logueado, redirigir
-if (isset($_SESSION["id_usuario"])) {
-    header("Location: ../index.php");
-    exit();
-}
 
 $alerta = isset($_SESSION["alerta"]) ? $_SESSION["alerta"] : null;
 unset($_SESSION["alerta"]);

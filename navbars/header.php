@@ -17,7 +17,7 @@ $id_usuario = $_SESSION['id_usuario'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediSys - Sistema de Denuncias</title>
+    <title>EcoReport</title>
     
     <!-- Enlaces a CSS y scripts necesarios -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -39,8 +39,8 @@ $id_usuario = $_SESSION['id_usuario'];
                 <div class="logo-pulse"></div>
             </div>
             <div class="brand-content">
-                <span class="brand-text">MediSys</span>
-                <span class="brand-subtitle">Sistema Hospitalario</span>
+                <span class="brand-text">EcoReport</span>
+                <span class="brand-subtitle">Sistema Denuncias</span>
             </div>
         </a>
 
@@ -122,59 +122,7 @@ $id_usuario = $_SESSION['id_usuario'];
                 </div>
             </div>
 
-            <!-- Métricas rápidas dinámicas -->
-            <div class="nav-item dropdown me-2 d-none d-lg-block">
-                <a class="nav-link metrics-display" href="#" id="metricsDropdown" 
-                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-speedometer2 metrics-icon"></i>
-                    <div class="metrics-content">
-                        <span class="metrics-title">Dashboard</span>
-                        <span class="metrics-value" id="todayCitas">Cargando...</span>
-                    </div>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end metrics-dropdown">
-                    <li><h6 class="dropdown-header">📊 Métricas en Tiempo Real</h6></li>
-                    <li class="metric-item">
-                        <div class="metric-icon success-bg">
-                            <i class="bi bi-calendar-check"></i>
-                        </div>
-                        <div class="metric-details">
-                            <span class="metric-label">Citas Completadas</span>
-                            <span class="metric-number" id="citasCompletadas">--</span>
-                        </div>
-                    </li>
-                    <li class="metric-item">
-                        <div class="metric-icon warning-bg">
-                            <i class="bi bi-clock"></i>
-                        </div>
-                        <div class="metric-details">
-                            <span class="metric-label">Citas Pendientes</span>
-                            <span class="metric-number" id="citasPendientes">--</span>
-                        </div>
-                    </li>
-                    <li class="metric-item">
-                        <div class="metric-icon info-bg">
-                            <i class="bi bi-people"></i>
-                        </div>
-                        <div class="metric-details">
-                            <span class="metric-label">Pacientes Hoy</span>
-                            <span class="metric-number" id="pacientesHoy">--</span>
-                        </div>
-                    </li>
-                    <li class="metric-item">
-                        <div class="metric-icon primary-bg">
-                            <i class="bi bi-heart-pulse"></i>
-                        </div>
-                        <div class="metric-details">
-                            <span class="metric-label">Sistema</span>
-                            <span class="metric-status" id="sistemaStatus">
-                                <i class="bi bi-circle-fill text-success"></i> Operativo
-                            </span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            
+           
             <!-- Notificaciones dinámicas -->
             <div class="nav-item dropdown me-2">
                 <a class="nav-link position-relative notification-container" href="#" id="notificationsDropdown" 
