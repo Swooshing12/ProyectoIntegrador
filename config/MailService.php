@@ -16,7 +16,7 @@ class MailService {
             'username' => 'swooshing14@gmail.com', // Tu correo
             'password' => 'afuw rcsw mvxs qwbq',   // Tu contraseña de aplicación
             'from_email' => 'swooshing14@gmail.com',
-            'from_name' => 'MediSys - Sistema Hospitalario'
+            'from_name' => 'EcoReport'
         ];
         
         $this->mail = new PHPMailer(true);
@@ -52,43 +52,44 @@ class MailService {
     /**
      * Enviar correo con contraseña temporal (MÉTODO ORIGINAL)
      */
-    public function enviarPasswordTemporal($destinatario, $nombreCompleto, $username, $passwordTemporal) {
-        try {
-            // Limpiar destinatarios previos
-            $this->mail->clearAddresses();
-            $this->mail->clearAttachments();
-            
-            // Configurar destinatario
-            $this->mail->addAddress($destinatario, $nombreCompleto);
-            
-            // Configurar contenido
-            $this->mail->isHTML(true);
-            $this->mail->Subject = '🔐 Credenciales de Acceso - MediSys';
-            
-            // Plantilla HTML del correo
-            $htmlBody = $this->generarPlantillaCredencialesHTML($nombreCompleto, $username, $passwordTemporal);
-            $this->mail->Body = $htmlBody;
-            
-            // Versión en texto plano
-            $this->mail->AltBody = $this->generarCredencialesTextoPlano($nombreCompleto, $username, $passwordTemporal);
-            
-            // Enviar correo
-            $resultado = $this->mail->send();
-            
-            if ($resultado) {
-                error_log("✅ Correo de credenciales enviado exitosamente a: $destinatario");
-                return true;
-            } else {
-                error_log("❌ Error enviando correo de credenciales a: $destinatario");
-                return false;
-            }
-            
-        } catch (Exception $e) {
-            error_log("❌ Error en enviarPasswordTemporal: " . $e->getMessage());
+    // En MailService.php - Asegúrate de que exista este método:
+public function enviarPasswordTemporal($destinatario, $nombreCompleto, $username, $passwordTemporal) {
+    try {
+        // Limpiar destinatarios previos
+        $this->mail->clearAddresses();
+        $this->mail->clearAttachments();
+        
+        // Configurar para EcoReport
+        $this->mail->setFrom($this->config['from_email'], 'EcoReport - Sistema Ambiental');
+        $this->mail->addAddress($destinatario, $nombreCompleto);
+        
+        // Configurar contenido
+        $this->mail->isHTML(true);
+        $this->mail->Subject = "🔑 Credenciales de Acceso - EcoReport";
+        
+        // Plantilla HTML del correo
+        $htmlBody = $this->generarPlantillaCredencialesHTML($nombreCompleto, $username, $passwordTemporal);
+        $this->mail->Body = $htmlBody;
+        
+        // Versión en texto plano
+        $this->mail->AltBody = $this->generarCredencialesTextoPlano($nombreCompleto, $username, $passwordTemporal);
+        
+        // Enviar correo
+        $resultado = $this->mail->send();
+        
+        if ($resultado) {
+            error_log("✅ Credenciales enviadas exitosamente a: $destinatario");
+            return true;
+        } else {
+            error_log("❌ Error enviando credenciales a: $destinatario");
             return false;
         }
+        
+    } catch (Exception $e) {
+        error_log("❌ Error en enviarPasswordTemporal: " . $e->getMessage());
+        return false;
     }
-    
+}
     /**
      * Generar contraseña temporal aleatoria (MÉTODO ORIGINAL)
      */
@@ -111,119 +112,380 @@ class MailService {
      * Plantilla HTML para credenciales de usuario (PLANTILLA ORIGINAL)
      */
     private function generarPlantillaCredencialesHTML($nombreCompleto, $username, $passwordTemporal) {
-        return "
-        <!DOCTYPE html>
-        <html lang='es'>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <title>Credenciales de Acceso - MediSys</title>
-            <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f5f7fb; }
-                .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-                .header { background: linear-gradient(135deg, #2e7d32, #1976d2); color: white; padding: 30px; text-align: center; }
-                .header h1 { margin: 0; font-size: 28px; }
-                .header p { margin: 10px 0 0 0; opacity: 0.9; }
-                .content { padding: 40px 30px; }
-                .welcome { font-size: 18px; color: #333; margin-bottom: 20px; }
-                .credentials-box { background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 25px; margin: 25px 0; }
-                .credential-item { margin: 15px 0; }
-                .credential-label { font-weight: bold; color: #495057; }
-                .credential-value { background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; font-family: monospace; font-size: 16px; color: #2e7d32; }
-                .warning-box { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 20px; margin: 25px 0; }
-                .warning-box h3 { color: #856404; margin-top: 0; }
-                .warning-box ul { color: #856404; margin-bottom: 0; }
-                .btn { display: inline-block; background: linear-gradient(135deg, #2e7d32, #1976d2); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
-                .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; font-size: 14px; }
-                .footer p { margin: 5px 0; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>🏥 MediSys</h1>
-                    <p>Sistema de Gestión Hospitalaria</p>
+    $fechaActual = date('d/m/Y H:i');
+    
+    return "
+    <!DOCTYPE html>
+    <html lang='es'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Credenciales de Acceso - EcoReport</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                padding: 20px;
+                color: #1e293b;
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background: white; 
+                border-radius: 16px; 
+                overflow: hidden; 
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .header { 
+                background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #10b981 100%);
+                color: white; 
+                padding: 40px 30px; 
+                text-align: center;
+                position: relative;
+            }
+            .header::before {
+                content: '🌱';
+                font-size: 3rem;
+                display: block;
+                margin-bottom: 1rem;
+                animation: pulse 2s infinite;
+            }
+            .header h1 { 
+                margin: 0; 
+                font-size: 28px; 
+                font-weight: 700;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            .header p {
+                margin: 10px 0 0 0;
+                font-size: 16px;
+                opacity: 0.9;
+            }
+            .content { 
+                padding: 40px 30px; 
+                line-height: 1.6;
+            }
+            .welcome {
+                font-size: 20px;
+                color: #16a34a;
+                font-weight: 600;
+                margin-bottom: 20px;
+            }
+            .intro-text {
+                font-size: 16px;
+                color: #475569;
+                margin-bottom: 30px;
+            }
+            .credentials-container {
+                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                border: 2px dashed #16a34a;
+                border-radius: 12px;
+                padding: 30px;
+                margin: 30px 0;
+                position: relative;
+            }
+            .credentials-title {
+                font-size: 16px;
+                color: #14532d;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 700;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            .credential-item {
+                margin: 20px 0;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .credential-label {
+                font-weight: 600;
+                color: #64748b;
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .credential-value {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid #d1d5db;
+                font-family: 'Courier New', monospace;
+                font-size: 18px;
+                font-weight: 700;
+                color: #16a34a;
+                text-align: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                word-break: break-all;
+            }
+            .warning-box {
+                background: linear-gradient(135deg, #fef3cd 0%, #fde68a 100%);
+                border-left: 4px solid #f59e0b;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 25px 0;
+            }
+            .warning-box h3 {
+                color: #92400e;
+                font-size: 16px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .warning-box ul {
+                color: #a16207;
+                padding-left: 20px;
+            }
+            .warning-box li {
+                margin-bottom: 8px;
+                font-size: 14px;
+            }
+            .action-button {
+                text-align: center;
+                margin: 30px 0;
+            }
+            .btn {
+                display: inline-block;
+                background: linear-gradient(135deg, #16a34a, #22c55e);
+                color: white;
+                padding: 15px 30px;
+                text-decoration: none;
+                border-radius: 10px;
+                font-weight: 600;
+                font-size: 16px;
+                box-shadow: 0 4px 6px rgba(22, 163, 74, 0.2);
+                transition: all 0.3s ease;
+            }
+            .eco-features {
+                background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+                border: 1px solid #0ea5e9;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 25px 0;
+                text-align: center;
+            }
+            .eco-features h4 {
+                color: #0284c7;
+                font-size: 16px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+            .features-grid {
+                display: flex;
+                justify-content: space-around;
+                flex-wrap: wrap;
+                gap: 15px;
+                margin-top: 15px;
+            }
+            .feature-item {
+                background: white;
+                padding: 10px 15px;
+                border-radius: 20px;
+                font-size: 12px;
+                color: #0284c7;
+                border: 1px solid #e0f2fe;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .footer {
+                background: #f8fafc;
+                padding: 30px;
+                text-align: center;
+                border-top: 1px solid #e2e8f0;
+            }
+            .footer-badges {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            .badge {
+                background: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 12px;
+                color: #64748b;
+                border: 1px solid #e2e8f0;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .footer-text {
+                color: #64748b;
+                font-size: 14px;
+                margin: 10px 0;
+            }
+            .eco-message {
+                color: #16a34a;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            @media (max-width: 600px) {
+                .container { margin: 10px; border-radius: 12px; }
+                .header, .content { padding: 20px; }
+                .credential-value { font-size: 16px; padding: 12px; }
+                .features-grid { flex-direction: column; align-items: center; }
+                .footer-badges { flex-direction: column; align-items: center; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <div class='header'>
+                <h1>EcoReport</h1>
+                <p>Sistema de Denuncias Ambientales</p>
+            </div>
+            
+            <div class='content'>
+                <div class='welcome'>
+                    ¡Bienvenido, $nombreCompleto!
                 </div>
                 
-                <div class='content'>
-                    <p class='welcome'>¡Hola <strong>$nombreCompleto</strong>!</p>
-                    
-                    <p>Te damos la bienvenida al sistema MediSys. Tu cuenta ha sido creada exitosamente y estas son tus credenciales de acceso:</p>
-                    
-                    <div class='credentials-box'>
-                        <div class='credential-item'>
-                            <div class='credential-label'>👤 Usuario:</div>
-                            <div class='credential-value'>$username</div>
-                        </div>
-                        <div class='credential-item'>
-                            <div class='credential-label'>🔐 Contraseña Temporal:</div>
-                            <div class='credential-value'>$passwordTemporal</div>
-                        </div>
-                    </div>
-                    
-                    <div class='warning-box'>
-                        <h3>⚠️ Importante - Primer Inicio de Sesión</h3>
-                        <ul>
-                            <li>Esta es una <strong>contraseña temporal</strong></li>
-                            <li>Debes cambiarla en tu primer inicio de sesión</li>
-                            <li>Tu cuenta está en estado <strong>\"Pendiente\"</strong> hasta que cambies la contraseña</li>
-                            <li>Guarda estas credenciales en un lugar seguro</li>
-                        </ul>
-                    </div>
-                    
-                    <center>
-                        <a href='http://localhost/MenuDinamico/vistas/login.php' class='btn'>
-                            🚀 Iniciar Sesión Ahora
-                        </a>
-                    </center>
-                    
-                    <p><strong>Nota:</strong> Si tienes problemas para acceder, contacta al administrador del sistema.</p>
+                <div class='intro-text'>
+                    Te damos la bienvenida al sistema <strong>EcoReport</strong>. Tu cuenta ha sido creada exitosamente como parte del registro de tu denuncia ambiental. Estas son tus credenciales de acceso:
                 </div>
                 
-                <div class='footer'>
-                    <p><strong>MediSys - Sistema de Gestión Hospitalaria</strong></p>
-                    <p>📧 Este correo fue generado automáticamente, no respondas a este mensaje.</p>
-                    <p>🔒 Mantén tus credenciales seguras y no las compartas con nadie.</p>
+                <div class='credentials-container'>
+                    <div class='credentials-title'>🔑 Tus Credenciales de Acceso</div>
+                    
+                    <div class='credential-item'>
+                        <div class='credential-label'>👤 Nombre de Usuario</div>
+                        <div class='credential-value'>$username</div>
+                    </div>
+                    
+                    <div class='credential-item'>
+                        <div class='credential-label'>🔐 Contraseña Temporal</div>
+                        <div class='credential-value'>$passwordTemporal</div>
+                    </div>
+                </div>
+                
+                <div class='warning-box'>
+                    <h3>⚠️ Instrucciones Importantes</h3>
+                    <ul>
+                        <li><strong>Esta contraseña es temporal</strong> y debes cambiarla al iniciar sesión</li>
+                        <li>Tu cuenta estará en estado <em>'Pendiente'</em> hasta que cambies la contraseña</li>
+                        <li>Podrás hacer seguimiento a tu denuncia una vez actives tu cuenta</li>
+                        <li>Guarda estas credenciales en un lugar seguro</li>
+                        <li>No compartas esta información con terceros</li>
+                    </ul>
+                </div>
+                
+                <div class='eco-features'>
+                    <h4>🌍 Con tu cuenta EcoReport podrás:</h4>
+                    <div class='features-grid'>
+                        <div class='feature-item'>
+                            <span>📍</span> Seguir tus denuncias
+                        </div>
+                        <div class='feature-item'>
+                            <span>📊</span> Ver estadísticas
+                        </div>
+                        <div class='feature-item'>
+                            <span>🔔</span> Recibir notificaciones
+                        </div>
+                        <div class='feature-item'>
+                            <span>🌱</span> Contribuir al ambiente
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div style='background: #f1f5f9; padding: 15px; border-radius: 8px; border-left: 4px solid #16a34a; margin: 20px 0;'>
+                    <strong>💡 Nota:</strong> Si tienes problemas para acceder o necesitas ayuda, contacta a nuestro equipo de soporte técnico.
                 </div>
             </div>
-        </body>
-        </html>";
-    }
+            
+            <div class='footer'>
+                <div class='footer-badges'>
+                    <div class='badge'>
+                        🔒 Conexión Segura
+                    </div>
+                    <div class='badge'>
+                        🌱 Plataforma Sostenible
+                    </div>
+                    <div class='badge'>
+                        ⚡ Generado: $fechaActual
+                    </div>
+                </div>
+                
+                <div class='footer-text'>
+                    <strong>EcoReport - Sistema de Denuncias Ambientales</strong>
+                </div>
+                <div class='footer-text'>
+                    📧 Este correo fue generado automáticamente, no respondas a este mensaje.
+                </div>
+                <div class='footer-text'>
+                    🔒 Mantén tus credenciales seguras y no las compartas con nadie.
+                </div>
+                <div class='eco-message'>
+                    🌍 Juntos cuidamos el planeta
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>";
+}
+
+/**
+ * Versión en texto plano para credenciales (ACTUALIZADA PARA ECOREPORT)
+ */
+private function generarCredencialesTextoPlano($nombreCompleto, $username, $passwordTemporal) {
+    $fechaActual = date('d/m/Y H:i');
     
-    /**
-     * Versión en texto plano para credenciales (MÉTODO ORIGINAL)
-     */
-    private function generarCredencialesTextoPlano($nombreCompleto, $username, $passwordTemporal) {
-        return "
-        ================================
-        MEDISYS - CREDENCIALES DE ACCESO
-        ================================
-        
-        ¡Hola $nombreCompleto!
-        
-        Te damos la bienvenida al sistema MediSys. Tu cuenta ha sido creada exitosamente.
-        
-        TUS CREDENCIALES:
-        Usuario: $username
-        Contraseña Temporal: $passwordTemporal
-        
-        IMPORTANTE:
-        - Esta es una contraseña temporal
-        - Debes cambiarla en tu primer inicio de sesión
-        - Tu cuenta está en estado 'Pendiente' hasta que cambies la contraseña
-        
-        Accede al sistema en: http://localhost/MenuDinamico/vistas/login.php
-        
-        Si tienes problemas, contacta al administrador.
-        
-        ================================
-        MediSys - Sistema de Gestión Hospitalaria
-        Este correo fue generado automáticamente.
-        ================================
-        ";
-    }
+    return "
+    =============================================
+    🌱 ECOREPORT - CREDENCIALES DE ACCESO
+    =============================================
+    
+    ¡Bienvenido, $nombreCompleto!
+    
+    Te damos la bienvenida al sistema EcoReport. Tu cuenta ha sido 
+    creada exitosamente como parte del registro de tu denuncia ambiental.
+    
+    TUS CREDENCIALES DE ACCESO:
+    👤 Usuario: $username
+    🔐 Contraseña Temporal: $passwordTemporal
+    
+    INSTRUCCIONES IMPORTANTES:
+    ⚠️ Esta contraseña es TEMPORAL y debes cambiarla al iniciar sesión
+    ⚠️ Tu cuenta estará en estado 'Pendiente' hasta que cambies la contraseña
+    ⚠️ Podrás hacer seguimiento a tu denuncia una vez actives tu cuenta
+    ⚠️ Guarda estas credenciales en un lugar seguro
+    
 
-
+    
+    CON TU CUENTA ECOREPORT PODRÁS:
+    📍 Hacer seguimiento a tus denuncias en tiempo real
+    📊 Ver estadísticas de impacto ambiental
+    🔔 Recibir notificaciones de actualizaciones
+    🌱 Contribuir activamente al cuidado del ambiente
+    
+    SOPORTE TÉCNICO:
+    📧 soporte@ecoreport.gob.ec
+    📱 1-800-ECO-REPORT
+    
+    Si tienes problemas para acceder, contacta a nuestro equipo de soporte.
+    
+    ===================================
+    © " . date('Y') . " EcoReport
+    Sistema de Denuncias Ambientales
+    🌍 Juntos cuidamos el planeta
+    
+    Generado: $fechaActual
+    Este es un correo automático.
+    ===================================";
+}
     /**
  * Enviar confirmación de denuncia registrada
  */
@@ -738,11 +1000,7 @@ private function generarPlantillaRecuperacionHTML($nombreCompleto, $passwordTemp
                     </ul>
                 </div>
                 
-                <div class='action-button'>
-                    <a href='" . BASE_URL . "/vistas/login.php' class='btn'>
-                        🚀 Iniciar Sesión Ahora
-                    </a>
-                </div>
+  
                 
                 <div class='security-note'>
                     <div style='color: #0284c7; font-size: 20px; margin-bottom: 10px;'>🛡️</div>
@@ -799,8 +1057,7 @@ private function generarRecuperacionTextoPlano($nombreCompleto, $passwordTempora
     - Por seguridad, expirará en 24 horas
     - No compartas esta información con nadie
     
-    ACCESO AL SISTEMA:
-    " . BASE_URL . "/vistas/login.php
+
     
     CONTACTO:
     📧 soporte@ecoreport.com

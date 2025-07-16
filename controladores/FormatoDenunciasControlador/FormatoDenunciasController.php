@@ -80,123 +80,144 @@ class FormatoDenunciasController {
     /**
      * 🔹 Crear nueva denuncia
      */
-    private function crearDenuncia() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    /**
+ * 🔹 Crear nueva denuncia
+ */
+private function crearDenuncia() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Método no permitido'
+        ]);
+        return;
+    }
+
+    try {
+        // Validar datos requeridos
+        $errores = $this->validarDatosDenuncia($_POST);
+        if (!empty($errores)) {
             $this->responderJSON([
                 'success' => false,
-                'message' => 'Método no permitido'
+                'message' => 'Datos incompletos o inválidos',
+                'errores' => $errores
             ]);
             return;
         }
 
+        // 1. Crear o obtener usuario denunciante
         try {
-            // Validar datos requeridos
-            $errores = $this->validarDatosDenuncia($_POST);
-            if (!empty($errores)) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'Datos incompletos o inválidos',
-                    'errores' => $errores
-                ]);
-                return;
-            }
-
-            // 1. Crear o obtener usuario denunciante
             $id_usuario_denunciante = $this->procesarUsuarioDenunciante($_POST);
-            if (!$id_usuario_denunciante) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'Error al procesar los datos del denunciante'
-                ]);
-                return;
-            }
-
-                            // ✅ CORREGIR: Asignar datos al modelo de denuncia
-                $this->denunciasModel->titulo = $_POST['titulo'] ?? 'Denuncia Ambiental ' . date('Y-m-d H:i');
-                $this->denunciasModel->descripcion = $_POST['narracion_hechos'];
-                $this->denunciasModel->id_categoria = (int)$_POST['id_categoria'];
-                $this->denunciasModel->id_usuario_denunciante = $id_usuario_denunciante;
-                $this->denunciasModel->id_estado_denuncia = 1; // ✅ AÑADIR ESTADO POR DEFECTO
-                $this->denunciasModel->provincia = $_POST['provincia'];
-                $this->denunciasModel->canton = $_POST['canton'];
-                $this->denunciasModel->parroquia = $_POST['parroquia'] ?? '';
-                $this->denunciasModel->direccion_especifica = $_POST['direccion_especifica'] ?? '';
-                $this->denunciasModel->fecha_ocurrencia = $_POST['fecha_ocurrencia'] ?? date('Y-m-d');
-                $this->denunciasModel->gravedad = $_POST['gravedad'] ?? 'MEDIA';
-                $this->denunciasModel->servidor_municipal = $_POST['servidor_municipal'] ?? '';
-                $this->denunciasModel->entidad_municipal = $_POST['entidad_municipal'] ?? '';
-                $this->denunciasModel->informacion_adicional_denunciado = $_POST['informacion_adicional'] ?? '';
-                $this->denunciasModel->requiere_atencion_prioritaria = ($_POST['atencion_prioritaria'] ?? 'no') === 'si';
-                $this->denunciasModel->acepta_politica_privacidad = isset($_POST['acepta_politica']);
-
-                // ✅ LOG PARA DEBUG
-                error_log("🔍 DEBUG - Datos de denuncia:");
-                error_log("Título: " . $this->denunciasModel->titulo);
-                error_log("Descripción: " . substr($this->denunciasModel->descripcion, 0, 50) . '...');
-                error_log("Categoría: " . $this->denunciasModel->id_categoria);
-                error_log("Usuario: " . $this->denunciasModel->id_usuario_denunciante);
-                error_log("Estado: " . $this->denunciasModel->id_estado_denuncia);
-
-            // 3. Crear la denuncia
-            $id_denuncia = $this->denunciasModel->crear();
-            
-            if (!$id_denuncia) {
-                $this->responderJSON([
-                    'success' => false,
-                    'message' => 'Error al crear la denuncia'
-                ]);
-                return;
-            }
-
-            // 4. Procesar evidencias si existen
-                $evidencias_procesadas = 0;
-                try {
-                    // ✅ DEBUG: Ver qué llega en $_FILES
-                    error_log("🔍 DEBUG \$_FILES: " . print_r($_FILES, true));
-                    
-                    if (isset($_FILES['evidencias']) && !empty($_FILES['evidencias']['name'][0])) {
-                        error_log("📁 Evidencias detectadas - Procesando array");
-                    $evidencias_procesadas = $this->procesarEvidencias($id_denuncia, $_FILES['evidencias'], $id_usuario_denunciante);
-                        error_log("📁 Evidencias procesadas exitosamente: $evidencias_procesadas");
-                    } else {
-                        error_log("📁 No hay evidencias para procesar");
-                    }
-                } catch (Exception $e) {
-                    error_log("❌ Error procesando evidencias: " . $e->getMessage());
-                    // No fallar la denuncia por error de evidencias
-                }
-
-                            // 5. Generar número de denuncia
-            $numero_denuncia = $this->generarNumeroDenuncia($id_denuncia);
-            $this->actualizarNumeroDenuncia($id_denuncia, $numero_denuncia);
-
-            // 6. Enviar notificación por correo
-            $usuario = $this->usuarioModel->obtenerPorId($id_usuario_denunciante);
-                // En el método crearDenuncia(), cambiar:
-                $envio_exitoso = $this->enviarNotificacionDenuncia($usuario, $numero_denuncia, [
-                    'categoria' => $datos['categoria'] ?? '',
-                    'provincia' => $_POST['provincia'],
-                    'canton' => $_POST['canton'],
-                    'gravedad' => $_POST['gravedad'] ?? 'MEDIA'
-                ]);
-                            // 7. Respuesta exitosa
-            $this->responderJSON([
-                'success' => true,
-                'message' => 'Denuncia creada exitosamente',
-                'numero_denuncia' => $numero_denuncia,
-                'id_denuncia' => $id_denuncia,
-                'evidencias_procesadas' => $evidencias_procesadas,
-                'email_enviado' => $envio_exitoso
-            ]);
-
         } catch (Exception $e) {
-            error_log("Error creando denuncia: " . $e->getMessage());
+            if ($e->getMessage() === "USUARIO_YA_EXISTE") {
+                // ❌ USUARIO YA EXISTE - MOSTRAR ERROR ESPECÍFICO
+                $this->responderJSON([
+                    'success' => false,
+                    'message' => 'Usuario ya registrado',
+                    'error_tipo' => 'USUARIO_EXISTENTE',
+                    'error_detalle' => 'La cédula ingresada ya está registrada en el sistema. Si ya tienes una cuenta, inicia sesión para crear tu denuncia.',
+                    'accion_requerida' => 'Inicia sesión con tu cuenta existente o contacta al administrador si olvidaste tus credenciales.'
+                ]);
+                return;
+            }
+            throw $e; // Re-lanzar otras excepciones
+        }
+        
+        if (!$id_usuario_denunciante) {
             $this->responderJSON([
                 'success' => false,
-                'message' => 'Error interno del servidor'
+                'message' => 'Error al procesar los datos del denunciante'
             ]);
+            return;
         }
+
+        // Continuar con el resto del proceso...
+        // ✅ CORREGIR: Asignar datos al modelo de denuncia
+        $this->denunciasModel->titulo = $_POST['titulo'] ?? 'Denuncia Ambiental ' . date('Y-m-d H:i');
+        $this->denunciasModel->descripcion = $_POST['narracion_hechos'];
+        $this->denunciasModel->id_categoria = (int)$_POST['id_categoria'];
+        $this->denunciasModel->id_usuario_denunciante = $id_usuario_denunciante;
+        $this->denunciasModel->id_estado_denuncia = 1; // ✅ AÑADIR ESTADO POR DEFECTO
+        $this->denunciasModel->provincia = $_POST['provincia'];
+        $this->denunciasModel->canton = $_POST['canton'];
+        $this->denunciasModel->parroquia = $_POST['parroquia'] ?? '';
+        $this->denunciasModel->direccion_especifica = $_POST['direccion_especifica'] ?? '';
+        $this->denunciasModel->fecha_ocurrencia = $_POST['fecha_ocurrencia'] ?? date('Y-m-d');
+        $this->denunciasModel->gravedad = $_POST['gravedad'] ?? 'MEDIA';
+        $this->denunciasModel->servidor_municipal = $_POST['servidor_municipal'] ?? '';
+        $this->denunciasModel->entidad_municipal = $_POST['entidad_municipal'] ?? '';
+        $this->denunciasModel->informacion_adicional_denunciado = $_POST['informacion_adicional'] ?? '';
+        $this->denunciasModel->requiere_atencion_prioritaria = ($_POST['atencion_prioritaria'] ?? 'no') === 'si';
+        $this->denunciasModel->acepta_politica_privacidad = isset($_POST['acepta_politica']);
+
+        // ✅ LOG PARA DEBUG
+        error_log("🔍 DEBUG - Datos de denuncia:");
+        error_log("Título: " . $this->denunciasModel->titulo);
+        error_log("Descripción: " . substr($this->denunciasModel->descripcion, 0, 50) . '...');
+        error_log("Categoría: " . $this->denunciasModel->id_categoria);
+        error_log("Usuario: " . $this->denunciasModel->id_usuario_denunciante);
+        error_log("Estado: " . $this->denunciasModel->id_estado_denuncia);
+
+        // 3. Crear la denuncia
+        $id_denuncia = $this->denunciasModel->crear();
+        
+        if (!$id_denuncia) {
+            $this->responderJSON([
+                'success' => false,
+                'message' => 'Error al crear la denuncia'
+            ]);
+            return;
+        }
+
+        // 4. Procesar evidencias si existen
+        $evidencias_procesadas = 0;
+        try {
+            // ✅ DEBUG: Ver qué llega en $_FILES
+            error_log("🔍 DEBUG \$_FILES: " . print_r($_FILES, true));
+            
+            if (isset($_FILES['evidencias']) && !empty($_FILES['evidencias']['name'][0])) {
+                error_log("📁 Evidencias detectadas - Procesando array");
+                $evidencias_procesadas = $this->procesarEvidencias($id_denuncia, $_FILES['evidencias'], $id_usuario_denunciante);
+                error_log("📁 Evidencias procesadas exitosamente: $evidencias_procesadas");
+            } else {
+                error_log("📁 No hay evidencias para procesar");
+            }
+        } catch (Exception $e) {
+            error_log("❌ Error procesando evidencias: " . $e->getMessage());
+            // No fallar la denuncia por error de evidencias
+        }
+
+        // 5. Generar número de denuncia
+        $numero_denuncia = $this->generarNumeroDenuncia($id_denuncia);
+        $this->actualizarNumeroDenuncia($id_denuncia, $numero_denuncia);
+
+        // 6. Enviar notificación por correo
+        $usuario = $this->usuarioModel->obtenerPorId($id_usuario_denunciante);
+        // En el método crearDenuncia(), cambiar:
+        $envio_exitoso = $this->enviarNotificacionDenuncia($usuario, $numero_denuncia, [
+            'categoria' => $datos['categoria'] ?? '',
+            'provincia' => $_POST['provincia'],
+            'canton' => $_POST['canton'],
+            'gravedad' => $_POST['gravedad'] ?? 'MEDIA'
+        ]);
+        
+        // 7. Respuesta exitosa
+        $this->responderJSON([
+            'success' => true,
+            'message' => 'Denuncia creada exitosamente',
+            'numero_denuncia' => $numero_denuncia,
+            'id_denuncia' => $id_denuncia,
+            'evidencias_procesadas' => $evidencias_procesadas,
+            'email_enviado' => $envio_exitoso
+        ]);
+
+    } catch (Exception $e) {
+        error_log("Error creando denuncia: " . $e->getMessage());
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Error interno del servidor'
+        ]);
     }
+}
 
     /**
      * 🔹 Validar datos de la denuncia
@@ -254,47 +275,94 @@ class FormatoDenunciasController {
     /**
      * 🔹 Procesar usuario denunciante (crear o obtener existente)
      */
-    private function procesarUsuarioDenunciante($datos) {
-        try {
-            $cedula = (int)$datos['cedula_denunciante'];
+    /**
+ * 🔹 Procesar usuario denunciante (crear o obtener existente)
+ */
+/**
+ * 🔹 Procesar usuario denunciante (crear o obtener existente)
+ */
+private function procesarUsuarioDenunciante($datos) {
+    try {
+        $cedula = (int)$datos['cedula_denunciante'];
+        
+        // Verificar si el usuario ya existe por cédula
+        $usuario_existente = $this->usuarioModel->obtenerPorCedula($cedula);
+        
+        if ($usuario_existente) {
+            // ❌ USUARIO YA EXISTE - NO PERMITIR CREAR DENUNCIA DESDE FORMULARIO PÚBLICO
+            error_log("⚠️ Usuario ya existe con cédula: " . $cedula . " - Email: " . $usuario_existente['correo']);
             
-            // Verificar si el usuario ya existe por cédula
-            $usuario_existente = $this->usuarioModel->obtenerPorCedula($cedula);
+            // Retornar error específico
+            throw new Exception("USUARIO_YA_EXISTE");
+        }
+
+        // Usuario no existe, crear nuevo
+        error_log("🔄 Creando nuevo usuario para denuncia...");
+        
+        // Generar contraseña temporal usando el método del MailService
+        $passwordTemporal = MailService::generarPasswordTemporal(12);
+        error_log("🔐 Contraseña temporal generada para nuevo usuario");
+        
+        $resultado = $this->usuarioModel->crearUsuario(
+            $cedula,
+            'denunciante_' . $cedula, // username único
+            $datos['nombres_denunciante'],
+            $datos['apellidos_denunciante'],
+            'O', // sexo no especificado
+            'Ecuatoriana', // nacionalidad por defecto
+            $datos['telefono_denunciante'],
+            $datos['direccion_denunciante'] ?? '',
+            $datos['correo_denunciante'],
+            $passwordTemporal, // usar contraseña temporal generada
+            74, // ID del rol "Denunciante"
+            null // fecha_verificacion null
+        );
+
+        if ($resultado) {
+            // Obtener el ID del usuario recién creado
+            $nuevo_usuario = $this->usuarioModel->obtenerPorCedula($cedula);
             
-            if ($usuario_existente) {
-                // Usuario existe, actualizar datos si es necesario
-                return $usuario_existente['id_usuario'];
-            }
-
-            // Usuario no existe, crear nuevo
-            $resultado = $this->usuarioModel->crearUsuario(
-                $cedula,
-                'denunciante_' . $cedula, // username único
-                $datos['nombres_denunciante'],
-                $datos['apellidos_denunciante'],
-                'O', // sexo no especificado
-                'Ecuatoriana', // nacionalidad por defecto
-                $datos['telefono_denunciante'],
-                $datos['direccion_denunciante'] ?? '',
-                $datos['correo_denunciante'],
-                $this->generarPasswordTemporal(), // contraseña temporal
-                74, // ID del rol "Denunciante"
-                null // fecha_verificacion null
-            );
-
-            if ($resultado) {
-                // Obtener el ID del usuario recién creado
-                $nuevo_usuario = $this->usuarioModel->obtenerPorCedula($cedula);
+            if ($nuevo_usuario) {
+                error_log("✅ Usuario creado exitosamente con ID: " . $nuevo_usuario['id_usuario']);
+                
+                // 🔥 ENVIAR CONTRASEÑA TEMPORAL POR CORREO
+                $nombreCompleto = $datos['nombres_denunciante'] . ' ' . $datos['apellidos_denunciante'];
+                $username = 'denunciante_' . $cedula;
+                
+                try {
+                    $emailEnviado = $this->mailService->enviarPasswordTemporal(
+                        $datos['correo_denunciante'],
+                        $nombreCompleto,
+                        $username,
+                        $passwordTemporal
+                    );
+                    
+                    if ($emailEnviado) {
+                        error_log("✅ Contraseña temporal enviada exitosamente a: " . $datos['correo_denunciante']);
+                    } else {
+                        error_log("⚠️ Error enviando contraseña temporal, pero usuario creado correctamente");
+                    }
+                } catch (Exception $e) {
+                    error_log("❌ Error enviando correo con contraseña temporal: " . $e->getMessage());
+                    // No fallar la creación de denuncia por error de correo
+                }
+                
                 return $nuevo_usuario['id_usuario'];
             }
-
-            return false;
-
-        } catch (Exception $e) {
-            error_log("Error procesando usuario denunciante: " . $e->getMessage());
-            return false;
         }
+
+        error_log("❌ Error creando usuario denunciante");
+        return false;
+
+    } catch (Exception $e) {
+        if ($e->getMessage() === "USUARIO_YA_EXISTE") {
+            // Re-lanzar la excepción específica
+            throw $e;
+        }
+        error_log("❌ Error procesando usuario denunciante: " . $e->getMessage());
+        return false;
     }
+}
 
     private function procesarEvidencias($id_denuncia, $archivos, $id_usuario_denunciante) {
     $procesadas = 0;

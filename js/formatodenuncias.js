@@ -993,6 +993,55 @@ function buscarPorCedula() {
         });
 }
 
+// Función para el botón buscar cédula
+document.getElementById('btnBuscarCedula').addEventListener('click', function() {
+    const cedula = document.getElementById('cedula_denunciante').value.trim();
+    
+    if (!cedula || cedula.length !== 10) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cédula Inválida',
+            text: 'Ingresa una cédula válida de 10 dígitos',
+            confirmButtonColor: '#16a34a'
+        });
+        return;
+    }
+    
+    // Mostrar loading
+    this.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Buscando...';
+    this.disabled = true;
+    
+    // Simular búsqueda (aquí puedes implementar la validación real)
+    setTimeout(() => {
+        // Restaurar botón
+        this.innerHTML = '<i class="bi bi-search"></i> Buscar';
+        this.disabled = false;
+        
+        // Mostrar advertencia
+        Swal.fire({
+            icon: 'info',
+            title: 'Importante',
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Si ya tienes una cuenta registrada:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>No podrás crear una nueva denuncia desde este formulario</li>
+                        <li>Debes iniciar sesión con tu cuenta existente</li>
+                        <li>Desde tu cuenta podrás crear nuevas denuncias</li>
+                    </ul>
+                    <p><strong>Si es tu primera denuncia:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Se creará automáticamente tu cuenta</li>
+                        <li>Recibirás credenciales por correo</li>
+                    </ul>
+                </div>
+            `,
+            confirmButtonColor: '#16a34a',
+            confirmButtonText: 'Entendido'
+        });
+    }, 1000);
+});
+
 function mostrarNacionalidadEcuatoriana() {
     // Crear o actualizar indicador de nacionalidad
     let nacionalidadIndicator = document.getElementById('nacionalidad_indicator');

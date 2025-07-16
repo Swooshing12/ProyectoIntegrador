@@ -23,7 +23,7 @@ class LoginController {
         $usuario = $this->usuarioModel->obtenerPorCorreo($username);
 
         if (!$usuario) {
-            $_SESSION["error"] = "Usuario no encontrado.";
+            $_SESSION["error"] = "Correo o contraseña incorrecta.";
             header("Location: ../../vistas/login.php");
             exit();
         }
@@ -73,7 +73,7 @@ class LoginController {
                 exit();
             } else {
                 $_SESSION["alerta"] = [
-                    "titulo" => "Contraseña incorrecta",
+                    "titulo" => "Contraseña o correo incorrecto",
                     "mensaje" => "Intento " . $_SESSION["intentos"][$username] . " de 3.",
                     "icono" => "warning"
                 ];
