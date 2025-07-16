@@ -17,7 +17,7 @@ $id_usuario = $_SESSION['id_usuario'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediSys - Sistema de Gestión Hospitalaria</title>
+    <title>MediSys - Sistema de Denuncias</title>
     
     <!-- Enlaces a CSS y scripts necesarios -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
