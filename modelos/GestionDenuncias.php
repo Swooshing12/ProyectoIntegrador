@@ -299,5 +299,66 @@ private function cambiarEstadoSinTransaccion($id_denuncia, $nuevo_estado, $comen
             return [];
         }
     }
+
+    /**
+ * Obtener denuncias filtradas por institución del usuario
+ */
+public function obtenerDenunciasPorUsuario($id_usuario) {
+    $query = "SELECT DISTINCT d.*,
+                     e.nombre_estado, e.descripcion as estado_descripcion, e.color as estado_color,
+                     c.nombre_categoria, c.icono as categoria_icono,
+                     p.nombre_provincia as provincia, 
+                     ca.nombre_canton as canton,
+                     i.nombre_institucion, i.siglas as institucion_siglas,
+                     u.nombres as denunciante_nombre, u.correo as denunciante_correo
+              FROM denuncias d
+              LEFT JOIN estados_denuncia e ON d.id_estado_denuncia = e.id_estado_denuncia
+              LEFT JOIN categorias_denuncia c ON d.id_categoria = c.id_categoria
+              LEFT JOIN provincias p ON d.id_provincia = p.id_provincia
+              LEFT JOIN cantones ca ON d.id_canton = ca.id_canton
+              LEFT JOIN instituciones i ON d.id_institucion_asignada = i.id_institucion
+              LEFT JOIN usuarios u ON d.id_denunciante = u.id_usuario
+              INNER JOIN usuarios_instituciones ui ON d.id_institucion_asignada = ui.id_institucion
+              WHERE ui.id_usuario = :id_usuario 
+                AND ui.estado_asignacion = 'ACTIVO'
+              ORDER BY d.fecha_creacion DESC";
+    
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Verificar si usuario pertenece a una institución
+ */
+public function usuarioPerteneceInstitucion($id_usuario, $id_institucion) {
+    $query = "SELECT COUNT(*) FROM usuarios_instituciones 
+              WHERE id_usuario = :id_usuario 
+                AND id_institucion = :id_institucion 
+                AND estado_asignacion = 'ACTIVO'";
+    
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+    $stmt->bindParam(':id_institucion', $id_institucion, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchColumn() > 0;
+}
+
+/**
+ * Obtener instituciones de un usuario
+ */
+public function obtenerInstitucionesUsuario($id_usuario) {
+    $query = "SELECT i.*, ui.es_responsable_principal
+              FROM instituciones i
+              INNER JOIN usuarios_instituciones ui ON i.id_institucion = ui.id_institucion
+              WHERE ui.id_usuario = :id_usuario 
+                AND ui.estado_asignacion = 'ACTIVO'";
+    
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }
 ?>

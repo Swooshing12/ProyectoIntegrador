@@ -92,11 +92,16 @@ class GestionDenunciasController {
                 break;
                 
             case 77: // Responsable Institucional
-                // Solo ve denuncias de su institución
-                // TODO: Obtener institución del usuario desde la BD
-                // $filtros['institucion'] = $institucion_del_usuario;
-                break;
-                
+            // Solo ve denuncias de su(s) institución(es)
+            $instituciones = $this->gestionModel->obtenerInstitucionesUsuario($this->id_usuario);
+            if (!empty($instituciones)) {
+                $ids_instituciones = array_column($instituciones, 'id_institucion');
+                $filtros['instituciones'] = $ids_instituciones;
+            } else {
+                // Si no tiene instituciones asignadas, no ve nada
+                $filtros['sin_datos'] = true;
+            }
+            break;
             case 1: // Administrador
                 // Ve todas las denuncias
                 break;
