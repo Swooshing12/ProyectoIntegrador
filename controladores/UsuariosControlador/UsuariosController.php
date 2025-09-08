@@ -54,6 +54,9 @@ class UsuariosController {
                 case 'buscarPorCedula':
                     $this->buscarPorCedula();
                     break;
+                    case 'verificarCedula':
+        $this->verificarCedula();
+        break;
                 case 'verificarUsername':
                     $this->verificarUsername();
                     break;
@@ -532,6 +535,32 @@ class UsuariosController {
         }
     }
     
+    
+    private function verificarCedula() {
+    $cedula = $_GET['cedula'] ?? '';
+    
+    if (empty($cedula)) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Cédula requerida'
+        ]);
+        return;
+    }
+    
+    try {
+        $existe = $this->usuarioModel->existeUsuarioPorCedula((int)$cedula);
+        
+        $this->responderJSON([
+            'success' => true,
+            'existe' => $existe
+        ]);
+    } catch (Exception $e) {
+        $this->responderJSON([
+            'success' => false,
+            'message' => 'Error al verificar cédula: ' . $e->getMessage()
+        ]);
+    }
+}
     private function obtenerTodos() {
         // Obtener parámetros
         $filtro = $_GET['filtro'] ?? 'todos';
