@@ -25,26 +25,31 @@ class UsuariosInstituciones {
     }
     
     /**
-     * Obtener todas las instituciones
+     * Obtener todas las instituciones ✅ CORREGIDO
      */
     public function obtenerInstituciones() {
-        $query = "SELECT * FROM instituciones ORDER BY nombre_institucion";
+        $query = "SELECT id_institucion, nombre_institucion, siglas, tipo_institucion, 
+                         contacto_email, contacto_telefono, responsable_nombre, responsable_cargo
+                  FROM instituciones_responsables 
+                  WHERE activo = 1
+                  ORDER BY nombre_institucion";
+        
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
     /**
-     * Obtener asignaciones existentes
+     * Obtener asignaciones existentes ✅ CORREGIDO
      */
     public function obtenerAsignaciones() {
         $query = "SELECT ui.*, 
                          u.nombres, u.apellidos, u.username,
-                         i.nombre_institucion, i.siglas
+                         ir.nombre_institucion, ir.siglas
                   FROM usuarios_instituciones ui
                   JOIN usuarios u ON ui.id_usuario = u.id_usuario
-                  JOIN instituciones i ON ui.id_institucion = i.id_institucion
-                  ORDER BY i.nombre_institucion, ui.es_responsable_principal DESC, u.nombres";
+                  JOIN instituciones_responsables ir ON ui.id_institucion = ir.id_institucion
+                  ORDER BY ir.nombre_institucion, ui.es_responsable_principal DESC, u.nombres";
         
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -131,21 +136,58 @@ class UsuariosInstituciones {
     }
     
     /**
-     * Obtener asignación por ID
+     * Obtener asignación por ID ✅ CORREGIDO
      */
     public function obtenerAsignacionPorId($id) {
         $query = "SELECT ui.*, 
                          u.nombres, u.apellidos, u.username,
-                         i.nombre_institucion, i.siglas
+                         ir.nombre_institucion, ir.siglas
                   FROM usuarios_instituciones ui
                   JOIN usuarios u ON ui.id_usuario = u.id_usuario
-                  JOIN instituciones i ON ui.id_institucion = i.id_institucion
+                  JOIN instituciones_responsables ir ON ui.id_institucion = ir.id_institucion
                   WHERE ui.id_usuario_institucion = :id";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * ✅ NUEVO: Obtener usuarios por institución
+     */
+    public function obtenerUsuariosPorInstitucion($id_institucion) {
+        $query = "SELECT ui.*, 
+                         u.nombres, u.apellidos, u.username, u.correo,
+                         ir.nombre_institucion, ir.siglas
+                  FROM usuarios_instituciones ui
+                  JOIN usuarios u ON ui.id_usuario = u.id_usuario
+                  JOIN instituciones_responsables ir ON ui.id_institucion = ir.id_institucion
+                  WHERE ui.id_institucion = :id_institucion AND ui.estado_asignacion = 'ACTIVO'
+                  ORDER BY ui.es_responsable_principal DESC, u.nombres";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_institucion', $id_institucion, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * ✅ NUEVO: Obtener instituciones por usuario
+     */
+    public function obtenerInstitucionesPorUsuario($id_usuario) {
+        $query = "SELECT ui.*, 
+                         ir.nombre_institucion, ir.siglas, ir.tipo_institucion,
+                         ir.contacto_email, ir.contacto_telefono
+                  FROM usuarios_instituciones ui
+                  JOIN instituciones_responsables ir ON ui.id_institucion = ir.id_institucion
+                  WHERE ui.id_usuario = :id_usuario AND ui.estado_asignacion = 'ACTIVO'
+                  ORDER BY ui.es_responsable_principal DESC, ir.nombre_institucion";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>
