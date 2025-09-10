@@ -386,7 +386,151 @@ function cambiarEstadoRapido(id_denuncia, nuevo_estado) {
         window.panelManager.cambiarEstadoRapido(id_denuncia, nuevo_estado);
     }
 }
+// Agregar estas funciones al final de tu archivo existente
 
+// Variable global para el ID de denuncia actual
+let denunciaActualId = null;
+
+// Función para mostrar modal de subir evidencia
+function mostrarSubirEvidencia() {
+    if (!denunciaActualId) {
+        panelManager.mostrarAlerta('error', 'Error: No hay denuncia seleccionada');
+        return;
+    }
+    
+    document.getElementById('evidencia_id_denuncia').value = denunciaActualId;
+    const modalSubir = new bootstrap.Modal(document.getElementById('modalSubirEvidencia'));
+    modalSubir.show();
+}
+
+// Configurar eventos del archivo
+document.addEventListener('DOMContentLoaded', function() {
+    // Evento para seleccionar archivo
+    const inputArchivo = document.getElementById('archivoEvidencia');
+    if (inputArchivo) {
+        inputArchivo.addEventListener('change', function(e) {
+            const archivo = e.target.files[0];
+            if (archivo) {
+                mostrarPreviewArchivo(archivo);
+            }
+        });
+    }
+    
+    // Formulario subir evidencia
+    const formSubirEvidencia = document.getElementById('formSubirEvidencia');
+    if (formSubirEvidencia) {
+        formSubirEvidencia.addEventListener('submit', function(e) {
+            e.preventDefault();
+            subirEvidencia();
+        });
+    }
+});
+
+// Mostrar preview del archivo seleccionado
+function mostrarPreviewArchivo(archivo) {
+    const preview = document.getElementById('archivoPreview');
+    const nombre = document.getElementById('archivoNombre');
+    const tamano = document.getElementById('archivoTamano');
+    
+    if (preview && nombre && tamano) {
+        // Validar tamaño (4MB máximo)
+        const maxSize = 4 * 1024 * 1024;
+        if (archivo.size > maxSize) {
+            panelManager.mostrarAlerta('error', 'El archivo es demasiado grande (máximo 4MB)');
+            limpiarArchivo();
+            return;
+        }
+        
+        nombre.textContent = archivo.name;
+        tamano.textContent = `(${formatearTamano(archivo.size)})`;
+        preview.classList.remove('d-none');
+    }
+}
+
+// Limpiar selección de archivo
+function limpiarArchivo() {
+    const input = document.getElementById('archivoEvidencia');
+    const preview = document.getElementById('archivoPreview');
+    
+    if (input) input.value = '';
+    if (preview) preview.classList.add('d-none');
+}
+
+// Formatear tamaño de archivo
+function formatearTamano(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Función principal para subir evidencia
+async function subirEvidencia() {
+    const form = document.getElementById('formSubirEvidencia');
+    const formData = new FormData(form);
+    formData.append('action', 'subirEvidencia');
+    
+    const btnSubir = document.getElementById('btnSubirEvidencia');
+    const progress = document.getElementById('uploadProgress');
+    const progressBar = progress.querySelector('.progress-bar');
+    
+    try {
+        // Mostrar progreso
+        btnSubir.disabled = true;
+        btnSubir.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Subiendo...';
+        progress.classList.remove('d-none');
+        
+        // Simular progreso
+        let porcentaje = 0;
+        const intervalo = setInterval(() => {
+            porcentaje += 10;
+            progressBar.style.width = porcentaje + '%';
+            if (porcentaje >= 90) clearInterval(intervalo);
+        }, 100);
+        
+        const response = await fetch(panelManager.baseUrl, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const resultado = await response.json();
+        
+        // Completar progreso
+        clearInterval(intervalo);
+        progressBar.style.width = '100%';
+        
+        if (resultado.success) {
+            panelManager.mostrarAlerta('success', resultado.message);
+            
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalSubirEvidencia'));
+            modal.hide();
+            
+            // Recargar detalle si está abierto
+            if (denunciaActualId) {
+                setTimeout(() => {
+                    panelManager.verDetalle(denunciaActualId);
+                }, 500);
+            }
+        } else {
+            panelManager.mostrarAlerta('error', resultado.message);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        panelManager.mostrarAlerta('error', 'Error al subir la evidencia');
+    } finally {
+        // Restaurar botón
+        btnSubir.disabled = false;
+        btnSubir.innerHTML = '<i class="bi bi-upload me-1"></i>Subir Evidencia';
+        progress.classList.add('d-none');
+        progressBar.style.width = '0%';
+    }
+}
+
+// Modificar la función cargarDetalleCompleto existente para incluir evidencias
+// (Buscar esta función en tu archivo y reemplazar la parte de evidencias)
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     window.panelManager = new PanelDenunciasManager();

@@ -40,6 +40,9 @@ class ResponsableController {
                 case 'obtenerSeguimiento':
                     $this->obtenerSeguimiento();
                     break;
+                case 'subirEvidencia':
+                    $this->subirEvidencia();
+                    break;
                 case 'index':
                 default:
                     $this->index();
@@ -148,7 +151,27 @@ class ResponsableController {
         $this->responderJSON(['success' => true, 'data' => $seguimiento]);
     }
 
+    // Agregar después del método obtenerSeguimiento()
+
+private function subirEvidencia() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        $this->responderJSON(['success' => false, 'message' => 'Método no permitido']);
+        return;
+    }
     
+    $id_denuncia = $_POST['id_denuncia'] ?? null;
+    $descripcion = $_POST['descripcion'] ?? '';
+    $id_usuario = $_SESSION['id_usuario'];
+    
+    if (!$id_denuncia || !isset($_FILES['evidencia'])) {
+        $this->responderJSON(['success' => false, 'message' => 'Datos incompletos']);
+        return;
+    }
+    
+    $archivo = $_FILES['evidencia'];
+    $resultado = $this->panelModel->subirEvidenciaSeguimiento($id_denuncia, $archivo, $id_usuario, $descripcion);
+    $this->responderJSON($resultado);
+}
     
     private function responderJSON($data) {
         header('Content-Type: application/json; charset=utf-8');
