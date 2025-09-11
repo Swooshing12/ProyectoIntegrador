@@ -3,10 +3,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Tuupola\Middleware\CorsMiddleware;
-use App\Controllers\AuthController;
-use App\Controllers\HistorialController;
-use App\Controllers\CitasController;
-use App\Controllers\DoctoresApiController;
+use App\Controllers\DenunciaController;
 use App\Utils\ResponseUtil;
 
 require __DIR__ . '/../../vendor/autoload.php';
@@ -37,7 +34,7 @@ spl_autoload_register(function ($class) {
 $app = AppFactory::create();
 
 // CONFIGURAR BASE PATH PARA SUBDIRECTORIOS
-$app->setBasePath('/MenuDinamico/api');
+$app->setBasePath('/ProyectoIntegrador/api');
 
 // Middlewares
 $app->addBodyParsingMiddleware();
@@ -61,10 +58,10 @@ $app->options('/{routes:.*}', function (Request $request, Response $response) {
 $app->get('/test', function (Request $request, Response $response) {
     $data = [
         'success' => true,
-        'message' => 'API MenuDinamico funcionando ✅',
+        'message' => 'API ProyectoIntegrador funcionando ✅',
         'timestamp' => date('Y-m-d H:i:s'),
         'estructura_funcionando' => [
-            'controllers' => file_exists(__DIR__ . '/../src/Controllers/AuthController.php') ? '✅' : '❌',
+            'controllers' => file_exists(__DIR__ . '/../src/Controllers/DenunciaController.php') ? '✅' : '❌',
             'validators' => file_exists(__DIR__ . '/../src/Validators/CedulaValidator.php') ? '✅' : '❌',
             'utils' => file_exists(__DIR__ . '/../src/Utils/ResponseUtil.php') ? '✅' : '❌'
         ]
@@ -74,10 +71,11 @@ $app->get('/test', function (Request $request, Response $response) {
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-// PUNTOS 1-2: Autenticación (usando AuthController)
-$app->post('/auth/login', [AuthController::class, 'login']);
-$app->post('/auth/change-password', [AuthController::class, 'changePassword']);
 
+
+$app->post('/denuncias', [DenunciaController::class, 'crear']);
+$app->get('/denuncias/consultar/{numero_denuncia}', [DenunciaController::class, 'consultarEstado']);
+$app->get('/denuncias/categorias', [DenunciaController::class, 'obtenerCategorias']);
 
 $app->run();
 ?>
